@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>محاسبه‌گر قیمت رولیک - آسارول</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#3b1f47">
+<link rel="icon" href="icon-192.png">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap');
   :root {
@@ -6547,6 +6550,176 @@ Object.assign(window,{slRender,slShow,slClose,slOpenEdit,slFormAuto,slDup,slDel,
   slMore:()=>{st.limit=1e9;slRender();}});
 
 document.addEventListener('DOMContentLoaded',()=>{ try{ load(); renderAll(); }catch(e){ console.error('stdlib init',e); } });
+})();
+</script>
+
+
+<!-- ══ OFFLINE + AUTO-SYNC TO ARCHIVE FOLDER (افزونه همگام‌سازی) ══ -->
+<style>
+  #as_badge{position:fixed;bottom:14px;right:14px;z-index:1500;display:flex;align-items:center;gap:8px;padding:7px 14px;border-radius:20px;
+    background:#fff;border:1.5px solid var(--border);box-shadow:0 4px 16px rgba(0,0,0,.15);font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit;color:var(--text)}
+  #as_badge .dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+  #as_badge.warn{background:#fff4d6;border-color:#e0b64c}
+  #as_panel{position:fixed;bottom:56px;right:14px;z-index:1500;width:min(380px,calc(100vw - 28px));background:#fff;border-radius:12px;
+    box-shadow:0 8px 30px rgba(0,0,0,.25);padding:14px 16px;font-size:.8rem;line-height:1.9;direction:rtl}
+  #as_panel h4{margin:0 0 6px;color:var(--primary);font-size:.9rem}
+  #as_panel .row{display:flex;justify-content:space-between;border-bottom:1px dashed var(--border);padding:2px 0}
+  #as_panel .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+  @media print{#as_badge,#as_panel{display:none!important}}
+</style>
+<button id="as_badge" type="button" onclick="asTogglePanel()"><span class="dot"></span><span id="as_badge_txt">…</span></button>
+<div id="as_panel" class="hidden"></div>
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// اجرای آفلاین + انتقال خودکار رکوردهای در صف به پوشه آرشیو روی لپ‌تاپ
+// - اگر پوشه آرشیو متصل نباشد (یا اجازه مرورگر منقضی شده باشد) رکوردها موقتاً
+//   در حافظه مرورگر می‌مانند و به محض دسترسی دوباره به پوشه، خودکار به پرونده
+//   همان شرکت (company_<نام>.json) منتقل می‌شوند (بدون تکرار).
+// - پیوست‌ها هم در صف (IndexedDB) نگه داشته و بعداً در files_<شرکت>/<رکورد> نوشته می‌شوند.
+// - اگر پوشه داخل Google Drive باشد، Google Drive به محض آنلاین شدن آن را همگام می‌کند.
+// ═══════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+const Q_DB='asaroul_sync_db', Q_ST='attach';
+let busy=false, lastSync=null, lastErr='';
+
+// ---------- service worker (فقط روی https) ----------
+if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost')){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(e=>console.warn('sw',e)));
+}
+
+// ---------- صف پیوست‌ها در IndexedDB ----------
+function qdb(){return new Promise((res,rej)=>{const r=indexedDB.open(Q_DB,1);r.onupgradeneeded=()=>r.result.createObjectStore(Q_ST,{keyPath:'id',autoIncrement:true});r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+async function qAll(){try{const db=await qdb();return await new Promise((res,rej)=>{const rq=db.transaction(Q_ST,'readonly').objectStore(Q_ST).getAll();rq.onsuccess=()=>res(rq.result||[]);rq.onerror=()=>rej(rq.error);});}catch(e){return [];}}
+async function qAdd(o){const db=await qdb();return new Promise((res,rej)=>{const tx=db.transaction(Q_ST,'readwrite');tx.objectStore(Q_ST).add(o);tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);});}
+async function qDel(id){const db=await qdb();return new Promise(res=>{const tx=db.transaction(Q_ST,'readwrite');tx.objectStore(Q_ST).delete(id);tx.oncomplete=()=>res();tx.onerror=()=>res();});}
+
+function localArchive(){return lsGet('ar_company_archive',{});}
+function pendingRecords(){const a=localArchive();return Object.keys(a).reduce((s,k)=>s+((a[k]||[]).length),0);}
+const recKey=r=>r.recordId||((r.timestamp||'')+'|'+(r.finalPrice||''));
+
+// ---------- پیوست: اگر پوشه متصل نیست، در صف بماند ----------
+const origAttach=window.caAttachFilesToRecord;
+window.caAttachFilesToRecord=async function(company,recordId,fileList){
+  if(caDirHandle) return origAttach(company,recordId,fileList);
+  if(!fileList||!fileList.length) return false;
+  for(const f of fileList){ try{ await qAdd({company,recordId,name:f.name,blob:f,added:Date.now()}); }catch(e){console.error('queue attach',e);} }
+  refresh(); return true;
+};
+
+// ---------- انتقال (ادغام بدون تکرار + پاک‌کردن صف) ----------
+async function migrate(){
+  if(!caDirHandle) return 0;
+  const all=localArchive(), keys=Object.keys(all); let moved=0;
+  const localIdx=lsGet('ar_company_index',{});
+  if(keys.length){
+    const idx=await caGetIndex()||{};
+    for(const key of keys){
+      const fh=await caDirHandle.getFileHandle('company_'+key+'.json',{create:true});
+      const disk=await caReadJSON(fh,[]);
+      const seen=new Set(disk.map(recKey));
+      const fresh=(all[key]||[]).filter(r=>!seen.has(recKey(r)));
+      const merged=fresh.concat(disk);
+      await caWriteJSON(caDirHandle,'company_'+key+'.json',merged);
+      idx[key]={name:(idx[key]&&idx[key].name)||(localIdx[key]&&localIdx[key].name)||key,count:merged.length,lastDate:merged[0]&&(merged[0].date||merged[0].timestamp),lastPrice:merged[0]&&merged[0].finalPrice};
+      moved+=fresh.length;
+      // فقط پس از نوشتن موفق از صف حذف شود
+      const cur=localArchive(); delete cur[key]; lsSet('ar_company_archive',cur);
+      delete localIdx[key];
+    }
+    await caSetIndex(idx); lsSet('ar_company_index',localIdx);
+  }
+  const localReg=lsGet('ar_companies_registry',[]);
+  if(localReg.length){
+    const diskReg=await caGetRegistry();
+    await caSetRegistry(Array.from(new Set([...diskReg,...localReg])).sort((a,b)=>a.localeCompare(b,'fa')));
+  }
+  // پیوست‌های در صف
+  for(const it of await qAll()){
+    try{ const f=new File([it.blob],it.name); const ok=await origAttach(it.company,it.recordId,[f]); if(ok!==false) await qDel(it.id); }
+    catch(e){ console.error('flush attach',e); }
+  }
+  if(moved&&typeof caRebuildSpecIndexFromAll==='function') await caRebuildSpecIndexFromAll();
+  return moved;
+}
+// جایگزینی مهاجرت اصلی با نسخه بدون تکرار (هنگام «انتخاب پوشه» هم همین اجرا می‌شود)
+window.caMigrateLocalToDisk=async function(){ await migrate(); };
+
+async function tryAutoConnect(){
+  if(caDirHandle||!caSavedHandle) return !!caDirHandle;
+  try{ if((await caSavedHandle.queryPermission({mode:'readwrite'}))==='granted'){ caDirHandle=caSavedHandle; caSavedHandle=null; if(typeof caUpdateStatus==='function') caUpdateStatus(); } }catch(e){}
+  return !!caDirHandle;
+}
+async function sync(interactive){
+  if(busy) return; busy=true; lastErr='';
+  try{
+    await tryAutoConnect();
+    if(!caDirHandle&&interactive&&caSavedHandle){
+      try{ if((await caSavedHandle.requestPermission({mode:'readwrite'}))==='granted'){ caDirHandle=caSavedHandle; caSavedHandle=null; } }catch(e){}
+      if(typeof caUpdateStatus==='function') caUpdateStatus();
+    }
+    if(caDirHandle){
+      const n=await migrate(); lastSync=new Date();
+      if(n){ try{ renderCompanyArchive(); renderCompanyRegistry(); refreshCompanyDatalist(); renderSpecReport(); }catch(e){}
+        toastMsg('✅ '+n+' رکورد در صف به پوشه آرشیو منتقل شد'); }
+    }
+  }catch(e){ lastErr=e.message||String(e); console.error('sync',e); }
+  busy=false; refresh();
+}
+window.asSyncNow=()=>sync(true);
+
+// اتصال مجدد دستی ← بلافاصله انتقال صف
+const origReconnect=window.reconnectArchiveFolder;
+window.reconnectArchiveFolder=async function(){ await origReconnect(); await sync(false); };
+
+// ---------- نشانگر وضعیت ----------
+function toastMsg(m){const t=document.createElement('div');t.style.cssText='position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:#1a7a4a;color:#fff;padding:10px 20px;border-radius:10px;z-index:2000;font-size:.85rem';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),4000);}
+let qCount=0;
+async function refresh(){
+  qCount=(await qAll()).length;
+  const pr=pendingRecords(), online=navigator.onLine, connected=!!caDirHandle;
+  const b=document.getElementById('as_badge'); if(!b) return;
+  const dot=b.querySelector('.dot');
+  let txt, color, warn=false;
+  if(!caSupported){ txt='ذخیره در مرورگر (Chrome/Edge لازم است)'; color='#c0392b'; warn=true; }
+  else if(connected&&!pr&&!qCount){ txt='پوشه آرشیو متصل'+(online?'':' · آفلاین'); color=online?'#1a7a4a':'#b45309'; }
+  else if(pr||qCount){ txt=(pr+qCount)+' مورد در صف انتقال به پوشه'+(caSavedHandle?' — کلیک کنید':''); color='#b45309'; warn=true; }
+  else if(caSavedHandle){ txt='پوشه آرشیو: نیاز به تأیید — کلیک کنید'; color='#b45309'; warn=true; }
+  else { txt='پوشه آرشیو انتخاب نشده'; color='#888'; warn=true; }
+  document.getElementById('as_badge_txt').textContent=(online?'🌐 ':'📴 ')+txt;
+  dot.style.background=color; b.classList.toggle('warn',warn);
+  const p=document.getElementById('as_panel'); if(p&&!p.classList.contains('hidden')) renderPanel();
+}
+function renderPanel(){
+  const pr=pendingRecords();
+  const row=(a,b)=>`<div class="row"><span>${a}</span><b>${b}</b></div>`;
+  document.getElementById('as_panel').innerHTML=`<h4>💾 ذخیره‌سازی و همگام‌سازی</h4>`+
+    row('اینترنت',navigator.onLine?'آنلاین 🌐':'آفلاین 📴')+
+    row('پوشه آرشیو روی لپ‌تاپ',caDirHandle?'متصل ✅':caSavedHandle?'نیاز به تأیید ⚠️':'انتخاب نشده')+
+    row('رکوردهای در صف',pr)+row('پیوست‌های در صف',qCount)+
+    row('آخرین انتقال',lastSync?lastSync.toLocaleTimeString('fa-IR'):'—')+
+    (lastErr?`<div style="color:#c0392b">خطا: ${lastErr.replace(/</g,'&lt;')}</div>`:'')+
+    `<div style="color:var(--text2);font-size:.74rem;margin-top:6px">رکوردها مستقیماً در پوشه همان شرکت روی لپ‌تاپ نوشته می‌شوند و این کار به اینترنت نیاز ندارد. اگر اتصال پوشه برقرار نباشد، در صف می‌مانند و به محض اتصال خودکار منتقل می‌شوند.
+    اگر پوشه آرشیو داخل پوشه <b>Google Drive</b> باشد، Google Drive هر وقت لپ‌تاپ آنلاین شد آن را با فضای ابری همگام می‌کند.
+    در پنجره اجازه Chrome/Edge گزینه «<b>Allow on every visit</b>» را بزنید تا هر بار نیاز به تأیید نباشد.</div>
+    <div class="acts"><button class="btn btn-primary btn-sm" onclick="asSyncNow()">🔄 انتقال الان</button>
+    <button class="btn btn-secondary btn-sm" onclick="chooseArchiveFolder()">📁 انتخاب / تغییر پوشه</button>
+    <button class="btn btn-secondary btn-sm" onclick="asTogglePanel()">بستن</button></div>`;
+}
+window.asTogglePanel=function(){const p=document.getElementById('as_panel');p.classList.toggle('hidden');if(!p.classList.contains('hidden')){renderPanel();if(caSavedHandle||pendingRecords()||qCount) sync(true);}};
+const origStatus=window.caUpdateStatus;
+if(origStatus) window.caUpdateStatus=function(){origStatus.apply(this,arguments);refresh();};
+
+// ---------- زمان‌های همگام‌سازی خودکار ----------
+window.addEventListener('online',()=>{refresh();sync(false);});
+window.addEventListener('offline',refresh);
+window.addEventListener('focus',()=>sync(false));
+document.addEventListener('visibilitychange',()=>{if(!document.hidden) sync(false);});
+setInterval(()=>sync(false),60000);
+// هر ذخیره جدید در localStorage (وقتی پوشه متصل نیست) فوراً نشانگر را به‌روز کند
+const origLsSet=window.lsSet;
+if(origLsSet) window.lsSet=function(k,v){origLsSet(k,v); if(k==='ar_company_archive') setTimeout(refresh,0);};
+document.addEventListener('DOMContentLoaded',()=>{ setTimeout(()=>sync(false),1500); refresh(); });
 })();
 </script>
 
