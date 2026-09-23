@@ -6659,7 +6659,7 @@ async function sync(interactive){
       if(typeof caUpdateStatus==='function') caUpdateStatus();
     }
     if(caDirHandle){
-      const n=await migrate(); lastSync=new Date();
+      const n=await migrate(); lastSync=new Date(); if(n) scheduleBackup();
       if(n){ try{ renderCompanyArchive(); renderCompanyRegistry(); refreshCompanyDatalist(); renderSpecReport(); }catch(e){}
         toastMsg('✅ '+n+' رکورد در صف به پوشه آرشیو منتقل شد'); }
     }
@@ -6667,6 +6667,60 @@ async function sync(interactive){
   busy=false; refresh();
 }
 window.asSyncNow=()=>sync(true);
+
+// ---------- پشتیبان خودکار در پوشه دوم روی لپ‌تاپ ----------
+// latest/ = کپی کامل و همیشه به‌روز پوشه آرشیو ؛ daily/YYYY-MM-DD/ = یک نسخه در روز (۳۰ روز آخر)
+const BK_KEY='backupDir', BK_KEEP=30;
+let bkDir=null, bkSaved=null, bkBusy=false, lastBackup=null, bkErr='', bkTimer=null;
+async function bkInit(){
+  try{ const h=await caIdbGet(BK_KEY); if(!h) return;
+    if((await h.queryPermission({mode:'readwrite'}))==='granted') bkDir=h; else bkSaved=h; }catch(e){}
+  try{ lastBackup=lsGet('ar_last_backup',null); }catch(e){}
+}
+async function copyDir(src,dst,skip){
+  for await (const [name,hd] of src.entries()){
+    if(skip&&skip(name)) continue;
+    if(hd.kind==='file'){ const f=await hd.getFile(); const out=await dst.getFileHandle(name,{create:true}); const w=await out.createWritable(); await w.write(f); await w.close(); }
+    else await copyDir(hd,await dst.getDirectoryHandle(name,{create:true}));
+  }
+}
+async function backupNow(interactive){
+  if(bkBusy) return; bkErr='';
+  if(!bkDir&&bkSaved&&interactive){ try{ if((await bkSaved.requestPermission({mode:'readwrite'}))==='granted'){ bkDir=bkSaved; bkSaved=null; } }catch(e){} }
+  if(!bkDir&&bkSaved){ try{ if((await bkSaved.queryPermission({mode:'readwrite'}))==='granted'){ bkDir=bkSaved; bkSaved=null; } }catch(e){} }
+  if(!bkDir||!caDirHandle){ refresh(); return; }
+  bkBusy=true;
+  try{
+    await copyDir(caDirHandle, await bkDir.getDirectoryHandle('latest',{create:true}));
+    const day=new Date().toISOString().slice(0,10);
+    const daily=await bkDir.getDirectoryHandle('daily',{create:true});
+    await copyDir(caDirHandle, await daily.getDirectoryHandle(day,{create:true}));
+    const days=[]; for await (const [n,hd] of daily.entries()) if(hd.kind==='directory'&&/^\d{4}-\d{2}-\d{2}$/.test(n)) days.push(n);
+    days.sort().slice(0,Math.max(0,days.length-BK_KEEP)).forEach(n=>daily.removeEntry(n,{recursive:true}).catch(()=>{}));
+    lastBackup=new Date().toISOString(); lsSet('ar_last_backup',lastBackup);
+  }catch(e){ bkErr=e.message||String(e); console.error('backup',e); }
+  bkBusy=false; refresh();
+}
+function scheduleBackup(){ clearTimeout(bkTimer); bkTimer=setTimeout(()=>backupNow(false),4000); }
+window.asBackupNow=()=>backupNow(true);
+window.asChooseBackup=async function(){
+  if(!caSupported){ alert('این قابلیت فقط در Chrome / Edge کار می‌کند.'); return; }
+  try{
+    const h=await window.showDirectoryPicker({id:'asaroul-backup',mode:'readwrite'});
+    if((await h.requestPermission({mode:'readwrite'}))!=='granted'){ alert('اجازه نوشتن داده نشد.'); return; }
+    if(caDirHandle){
+      if(await h.isSameEntry(caDirHandle)){ alert('پوشه پشتیبان باید با پوشه آرشیو فرق داشته باشد.'); return; }
+      if(await caDirHandle.resolve(h)){ alert('پوشه پشتیبان نباید داخل پوشه آرشیو (ابری) باشد؛ یک پوشه جدا روی لپ‌تاپ انتخاب کنید.'); return; }
+      if(await h.resolve(caDirHandle)){ alert('پوشه آرشیو داخل این پوشه است؛ یک پوشه جدا انتخاب کنید.'); return; }
+    }
+    bkDir=h; bkSaved=null; await caIdbSet(BK_KEY,h); await backupNow(false);
+    if(!bkErr) alert('✅ پوشه پشتیبان متصل شد و اولین پشتیبان گرفته شد.');
+  }catch(e){ if(e&&e.name!=='AbortError') alert('خطا: '+e.message); }
+};
+// پس از هر ذخیره رکورد، پشتیبان به‌روز شود
+const origSaveRecord=window.caSaveRecord;
+if(origSaveRecord) window.caSaveRecord=async function(){ const r=await origSaveRecord.apply(this,arguments); scheduleBackup(); return r; };
+setInterval(()=>backupNow(false),10*60000);
 
 // اتصال مجدد دستی ← بلافاصله انتقال صف
 const origReconnect=window.reconnectArchiveFolder;
@@ -6682,7 +6736,7 @@ async function refresh(){
   const dot=b.querySelector('.dot');
   let txt, color, warn=false;
   if(!caSupported){ txt='ذخیره در مرورگر (Chrome/Edge لازم است)'; color='#c0392b'; warn=true; }
-  else if(connected&&!pr&&!qCount){ txt='پوشه آرشیو متصل'+(online?'':' · آفلاین'); color=online?'#1a7a4a':'#b45309'; }
+  else if(connected&&!pr&&!qCount){ txt='پوشه آرشیو متصل'+(online?'':' · آفلاین')+(bkDir?' · پشتیبان ✓':bkSaved?' · پشتیبان: نیاز به تأیید — کلیک کنید':''); color=bkSaved?'#b45309':online?'#1a7a4a':'#b45309'; warn=!!bkSaved; }
   else if(pr||qCount){ txt=(pr+qCount)+' مورد در صف انتقال به پوشه'+(caSavedHandle?' — کلیک کنید':''); color='#b45309'; warn=true; }
   else if(caSavedHandle){ txt='پوشه آرشیو: نیاز به تأیید — کلیک کنید'; color='#b45309'; warn=true; }
   else { txt='پوشه آرشیو انتخاب نشده'; color='#888'; warn=true; }
@@ -6698,15 +6752,20 @@ function renderPanel(){
     row('پوشه آرشیو روی لپ‌تاپ',caDirHandle?'متصل ✅':caSavedHandle?'نیاز به تأیید ⚠️':'انتخاب نشده')+
     row('رکوردهای در صف',pr)+row('پیوست‌های در صف',qCount)+
     row('آخرین انتقال',lastSync?lastSync.toLocaleTimeString('fa-IR'):'—')+
+    row('پوشه پشتیبان روی لپ‌تاپ',bkDir?'متصل ✅':bkSaved?'نیاز به تأیید ⚠️':'انتخاب نشده')+
+    row('آخرین پشتیبان',lastBackup?new Date(lastBackup).toLocaleString('fa-IR'):'—')+
+    (bkErr?`<div style="color:#c0392b">خطای پشتیبان: ${bkErr.replace(/</g,'&lt;')}</div>`:'')+
     (lastErr?`<div style="color:#c0392b">خطا: ${lastErr.replace(/</g,'&lt;')}</div>`:'')+
     `<div style="color:var(--text2);font-size:.74rem;margin-top:6px">رکوردها مستقیماً در پوشه همان شرکت روی لپ‌تاپ نوشته می‌شوند و این کار به اینترنت نیاز ندارد. اگر اتصال پوشه برقرار نباشد، در صف می‌مانند و به محض اتصال خودکار منتقل می‌شوند.
-    اگر پوشه آرشیو داخل پوشه <b>Google Drive</b> باشد، Google Drive هر وقت لپ‌تاپ آنلاین شد آن را با فضای ابری همگام می‌کند.
+    پوشه آرشیو را داخل <b>Google Drive</b> بگذارید تا هر وقت لپ‌تاپ آنلاین شد با فضای ابری همگام شود؛ «پوشه پشتیبان» یک پوشه جدا روی لپ‌تاپ است که پس از هر ذخیره و هر ۱۰ دقیقه یک کپی کامل (latest) و روزانه یک نسخه (daily، ۳۰ روز آخر) در آن نگه داشته می‌شود.
     در پنجره اجازه Chrome/Edge گزینه «<b>Allow on every visit</b>» را بزنید تا هر بار نیاز به تأیید نباشد.</div>
     <div class="acts"><button class="btn btn-primary btn-sm" onclick="asSyncNow()">🔄 انتقال الان</button>
-    <button class="btn btn-secondary btn-sm" onclick="chooseArchiveFolder()">📁 انتخاب / تغییر پوشه</button>
+    <button class="btn btn-secondary btn-sm" onclick="chooseArchiveFolder()">☁️ پوشه آرشیو (ابری)</button>
+    <button class="btn btn-secondary btn-sm" onclick="asChooseBackup()">💻 پوشه پشتیبان</button>
+    <button class="btn btn-secondary btn-sm" onclick="asBackupNow()">🗂 پشتیبان الان</button>
     <button class="btn btn-secondary btn-sm" onclick="asTogglePanel()">بستن</button></div>`;
 }
-window.asTogglePanel=function(){const p=document.getElementById('as_panel');p.classList.toggle('hidden');if(!p.classList.contains('hidden')){renderPanel();if(caSavedHandle||pendingRecords()||qCount) sync(true);}};
+window.asTogglePanel=function(){const p=document.getElementById('as_panel');p.classList.toggle('hidden');if(!p.classList.contains('hidden')){renderPanel();if(caSavedHandle||pendingRecords()||qCount) sync(true); if(bkSaved) backupNow(true);}};
 const origStatus=window.caUpdateStatus;
 if(origStatus) window.caUpdateStatus=function(){origStatus.apply(this,arguments);refresh();};
 
@@ -6719,7 +6778,7 @@ setInterval(()=>sync(false),60000);
 // هر ذخیره جدید در localStorage (وقتی پوشه متصل نیست) فوراً نشانگر را به‌روز کند
 const origLsSet=window.lsSet;
 if(origLsSet) window.lsSet=function(k,v){origLsSet(k,v); if(k==='ar_company_archive') setTimeout(refresh,0);};
-document.addEventListener('DOMContentLoaded',()=>{ setTimeout(()=>sync(false),1500); refresh(); });
+document.addEventListener('DOMContentLoaded',()=>{ bkInit().then(refresh); setTimeout(()=>sync(false).then(()=>backupNow(false)),1500); refresh(); });
 })();
 </script>
 
