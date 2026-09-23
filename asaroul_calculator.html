@@ -5989,9 +5989,11 @@ const F = {
   ringOD: {ab:'Øe',    fa:'قطر خارجی لاستیک', u:'mm', t:'num', g:'ring'},
   ringID: {ab:'Øi',    fa:'قطر داخلی لاستیک', u:'mm', t:'num', g:'ring'},
   E:      {ab:'E',     fa:'عرض لاستیک', u:'mm', t:'num', g:'ring'},
-  E1:     {ab:'E1',    fa:'عرض لاستیک تخت کناری', u:'mm', t:'num', g:'ring'},
-  nSide:  {ab:'n side',fa:'تعداد لاستیک تخت در هر طرف', t:'num', g:'ring'},
-  nCenter:{ab:'n cen.',fa:'تعداد لاستیک R دار میانی', t:'num', g:'ring'},
+  sideType:{ab:'T/R',  fa:'نوع لاستیک کناری (تخت ET / خم ER)', t:'rtype', g:'ring'},
+  E1:     {ab:'ET/ER', fa:'عرض لاستیک کناری', u:'mm', t:'num', g:'ring'},
+  cenType:{ab:'T/R',   fa:'نوع لاستیک میانی (تخت ET / خم ER)', t:'rtype', g:'ring'},
+  nSide:  {ab:'n side',fa:'تعداد لاستیک کناری در هر طرف', t:'num', g:'ring'},
+  nCenter:{ab:'n cen.',fa:'تعداد لاستیک میانی', t:'num', g:'ring'},
   nRings: {ab:'n tot.',fa:'تعداد کل لاستیک', t:'num', g:'ring'},
   a:      {ab:'a',     fa:'طول مجموعه لاستیک کناری (هر طرف)', u:'mm', t:'num', g:'ring'},
   b:      {ab:'b',     fa:'فاصله (گام) لاستیک‌های میانی', u:'mm', t:'num', g:'ring'},
@@ -6004,14 +6006,14 @@ const F = {
   note:   {ab:'Note',  fa:'توضیحات', t:'text'}
 };
 // عنوان اختصاصی E در هر قالب
-const E_LABEL = {impact:'عرض لاستیک ضربه‌گیر', rings:'عرض لاستیک R دار (نوک‌تیز) میانی', spiral:'عرض/گام لاستیک مارپیچ'};
+const E_LABEL = {impact:'عرض لاستیک ضربه‌گیر', rings:'عرض لاستیک میانی', spiral:'عرض/گام لاستیک مارپیچ'};
 
 // قالب‌ها: چه فیلدهایی برای هر نوع رولیک نمایش داده شود
 const TPL = {
   plain:  {fa:'ساده',            fields:['D','s','B','C','A','d','ch','bearing']},
   weigh:  {fa:'توزین (دقیق)',    fields:['D','s','B','C','A','d','ch','bearing','tir']},
   impact: {fa:'ضربه‌گیر',        fields:['D','s','B','C','A','d','ch','bearing','ringOD','ringID','E','nRings','ringType']},
-  rings:  {fa:'برگشت لاستیکی',   fields:['D','s','B','C','A','d','ch','bearing','ringOD','ringID','E1','nSide','E','nCenter','nRings','a','b','t']},
+  rings:  {fa:'برگشت لاستیکی',   fields:['D','s','B','C','A','d','ch','bearing','ringOD','ringID','sideType','E1','nSide','cenType','E','nCenter','nRings','a','b','t']},
   spiral: {fa:'اسپیرال',         fields:['D','s','B','C','A','d','ch','bearing','ringOD','ringID','E','nRings','ringType']}
 };
 const ARR = {
@@ -6088,12 +6090,12 @@ function buildDefaults(){
   [[300,380,388,406,4.6,5,90,50,360,2,1],[400,500,508,526,5.6,6,95,75,465,2,2],[500,600,608,626,6.4,7,95,80,560,2,3],[650,750,758,776,7.6,8,90,110,730,2,4],
    [800,950,958,976,9.6,10,135,125,895,3,4],[1000,1150,1158,1176,11.3,12,135,120,1110,3,6],[1200,1400,1408,1426,13.2,13,135,130,1310,3,7],[1400,1600,1608,1626,15.3,15,135,125,1520,3,9]]
   .forEach(([bw,B,C,A,w,tot,a,bb,t,side,cen])=>out.push({id:'d_rings_108NL_'+bw,cat:'rings',series:'PSV/1',ringSeries:'108NL',belt:bw,arr:'1',D:63,s:3,B,C,A,d:20,ch:14,bearing:'6204',
-     ringOD:108,ringID:63,E:25,E1:45,nSide:side,nCenter:cen,nRings:tot,a,b:bb,t,weight:w,code:'PSV 1,20F,108NL,'+C,src:'ok',note:'Øe 108 NL — رولیک پایه PSV 1: D=63, d=d1=20, bearing 6204, ch=14'}));
+     ringOD:108,ringID:63,E:25,E1:45,sideType:'T',cenType:'R',nSide:side,nCenter:cen,nRings:tot,a,b:bb,t,weight:w,code:'PSV 1,20F,108NL,'+C,src:'ok',note:'Øe 108 NL — رولیک پایه PSV 1: D=63, d=d1=20, bearing 6204, ch=14'}));
   // --- برگشت لاستیکی Øe 133 روی لوله 89 (پیش‌فرض، مطابق لاستیک‌های لیست قیمت)
   const pat={500:[2,3],650:[2,4],800:[3,4],1000:[3,6],1200:[3,7],1400:[3,9],1600:[3,10]};
   Object.keys(pat).forEach(bw=>{bw=+bw; const B=LEN['1'][bw], s=ser['PSV/2'], [side,cen]=pat[bw], E1=35, E=30, a=side*E1, t=B-40;
     out.push({id:'d_rings_133_'+bw,cat:'rings',series:'PSV/2',ringSeries:'133',belt:bw,arr:'1',D:89,s:3,B,C:B+s.dC,A:B+s.dA,d:s.d,ch:s.ch,bearing:s.bearing,
-      ringOD:133,ringID:89,E,E1,nSide:side,nCenter:cen,nRings:2*side+cen,a,b:Math.round((t-2*a)/(cen+1)),t,code:'PSV 2,25F,133NL,'+(B+s.dC),src:'draft',note:'چینش مشابه 108NL — بررسی شود'});});
+      ringOD:133,ringID:89,E,E1,sideType:'T',cenType:'R',nSide:side,nCenter:cen,nRings:2*side+cen,a,b:Math.round((t-2*a)/(cen+1)),t,code:'PSV 2,25F,133NL,'+(B+s.dC),src:'draft',note:'چینش مشابه 108NL — بررسی شود'});});
   // --- اسپیرال (برگشت)
   [['PSV/1',60,108,40,400,1000],['PSV/2',89,133,40,500,1400],['PSV/4',108,159,40,800,1600]].forEach(([sk,D,oe,E,f,t])=>belts(f,t).forEach(b=>{const B=LEN['1'][b];
     mk('spiral',sk,'1',b,D,B,{ringOD:oe,ringID:D,E,nRings:Math.floor(B/E),ringType:'مارپیچ'},'draft');}));
@@ -6111,6 +6113,7 @@ function load(){
   series=slGet(K_SERIES,null)||JSON.parse(JSON.stringify(DEF_SERIES));
   cats  =slGet(K_CATS,null)  ||JSON.parse(JSON.stringify(DEF_CATS));
   items =slGet(K_ITEMS,null) ||buildDefaults();
+  items.forEach(it=>{if(catOf(it.cat).tpl==='rings'){it.sideType=sideT(it);it.cenType=cenT(it);}});
 }
 function saveAll(){slSet(K_ITEMS,items);slSet(K_SERIES,series);slSet(K_CATS,cats);}
 const catOf=k=>cats.find(c=>c.k===k)||{k,name:k,tpl:'plain',calc:''};
@@ -6128,17 +6131,28 @@ function estWeight(it){ // وزن تقریبی فولاد لوله + شافت (�
   let w=Math.PI/4*(D*D-(D-2*s)*(D-2*s))*B*7.85e-6; if(d&&A) w+=Math.PI/4*d*d*A*7.85e-6; return +w.toFixed(1);
 }
 function fieldLabel(k,tpl){return (k==='E'&&E_LABEL[tpl])?E_LABEL[tpl]:F[k].fa;}
+// نوع لاستیک: T = تخت (ET) ، R = خم / R دار (ER)
+const RT={T:{fa:'تخت',ab:'ET'},R:{fa:'خم (R دار)',ab:'ER'}};
+function sideT(it){return it.sideType==='R'?'R':'T';}
+function cenT(it){return it.cenType==='T'?'T':'R';}
+function impT(it){return /گرد|خم|R/.test(it.ringType||'')?'R':'T';}
+function wType(it,k){const tpl=catOf(it.cat).tpl; if(tpl==='rings') return k==='E1'?sideT(it):k==='E'?cenT(it):null; if(tpl==='impact'&&k==='E') return impT(it); return null;}
+function abOf(k,tpl){if(tpl==='rings'&&(k==='E1'||k==='E'))return 'ET/ER'; if(tpl==='impact'&&k==='E')return 'ET/ER'; return F[k].ab;}
+function dispVal(it,k){const v=it[k]; if(!has(v)&&!(F[k]&&F[k].t==='rtype')) return '';
+  if(k==='sideType') return RT[sideT(it)].fa+' ('+RT[sideT(it)].ab+')'; if(k==='cenType') return RT[cenT(it)].fa+' ('+RT[cenT(it)].ab+')';
+  const wt=wType(it,k); return wt?RT[wt].ab+' '+v:v;}
+function typeWords(t){return t==='R'?['گرد','لبه گرد','خم','R']:['تخت'];}
 function dutyBadge(it){const s=serOf(it.series);return `<span class="sl-badge sl-duty" title="${esc(s?s.duty:'')}">${esc(it.series||'—')}${it.ringSeries?' · '+esc(it.ringSeries):''}</span>`;}
 function srcBadge(it){const s=SRC[it.src]||SRC.draft;return `<span class="sl-badge ${s.cls}" title="${esc(s.full)}">${s.fa}</span>`;}
 function arrTxt(a){const x=ARR[a];return x?x.g+' '+x.fa:(a||'');}
 function itemTitle(it){const s=serOf(it.series);return `${catOf(it.cat).name} — ${it.series||''}${it.ringSeries?' · '+it.ringSeries:''}${s?' ('+s.duty+')':''}`;}
 function searchText(it){const c=catOf(it.cat),s=serOf(it.series);
-  return [c.name,it.series,it.ringSeries,s&&s.duty,it.code,it.note,it.bearing,arrTxt(it.arr),it.belt&&('bw'+it.belt),
+  return [c.name,catOf(it.cat).tpl==='rings'?RT[sideT(it)].ab+' '+RT[cenT(it)].ab+' '+RT[sideT(it)].fa+' '+RT[cenT(it)].fa:'',it.series,it.ringSeries,s&&s.duty,it.code,it.note,it.bearing,arrTxt(it.arr),it.belt&&('bw'+it.belt),
     it.D&&it.B&&(it.D+'*'+it.B),it.D&&it.s&&(it.D+'*'+it.s),it.ringID&&it.ringOD&&(it.ringID+'*'+it.ringOD+'*'+(it.E||'')),
     ...Object.keys(F).filter(k=>F[k].t==='num').map(k=>it[k])].filter(has).join(' ').toLowerCase();}
 
 // ---------- rendering ----------
-const FILTERS=[['series','سری / کلاس کاری'],['belt','عرض نوار (mm)'],['arr','چینش'],['D','قطر لوله D'],['d','قطر شافت d'],['bearing','بلبرینگ'],['ringOD','قطر لاستیک Øe'],['src','منبع']];
+const FILTERS=[['series','سری / کلاس کاری'],['belt','عرض نوار (mm)'],['arr','چینش'],['D','قطر لوله D'],['d','قطر شافت d'],['bearing','بلبرینگ'],['ringOD','قطر لاستیک Øe'],['cenType','نوع لاستیک میانی'],['src','منبع']];
 function filtered(ignoreKey){
   const words=st.q.toLowerCase().split(/\s+/).filter(Boolean);
   return items.filter(it=>{
@@ -6158,7 +6172,7 @@ function renderFilters(){
     const vals=[...new Set(filtered(k).map(i=>i[k]).filter(has).map(String))];
     if(!vals.length&&!st.f[k]) return '';
     vals.sort((x,y)=>(parseFloat(x)-parseFloat(y))||x.localeCompare(y));
-    const disp=v=>k==='arr'?arrTxt(v):k==='src'?(SRC[v]||{}).fa||v:v;
+    const disp=v=>(k==='cenType'||k==='sideType')?(RT[v]?RT[v].fa+' ('+RT[v].ab+')':v):k==='arr'?arrTxt(v):k==='src'?(SRC[v]||{}).fa||v:v;
     return `<div><label>${lab}</label><select onchange="slSetFilter('${k}',this.value)"><option value="">همه</option>${vals.map(v=>`<option value="${esc(v)}" ${st.f[k]===v?'selected':''}>${esc(disp(v))}</option>`).join('')}</select></div>`;
   }).join('')+`<div style="align-self:end"><button class="btn btn-secondary btn-sm" onclick="slClearFilters()">✕ حذف فیلترها</button></div>`;
 }
@@ -6180,7 +6194,7 @@ function slRender(){
   const list=filtered();
   const {tube,shaft,ringCols,extra}=colsFor(list);
   const tpl=st.cat!=='all'?catOf(st.cat).tpl:'';
-  const th=k=>`<th title="${esc(fieldLabel(k,tpl))}"><span class="ab">${F[k].ab}</span><span class="fa">${esc(fieldLabel(k,tpl))}</span></th>`;
+  const th=k=>`<th title="${esc(fieldLabel(k,tpl))}"><span class="ab">${abOf(k,tpl||(k==='E1'?'rings':''))}</span><span class="fa">${esc(fieldLabel(k,tpl))}</span></th>`;
   let h=`<thead><tr><th class="sl-grp" colspan="${st.cat==='all'?5:4}">عمومی</th><th class="sl-grp" colspan="${tube.length}">لوله</th><th class="sl-grp" colspan="${shaft.length}">شافت و بلبرینگ</th>`+
     (ringCols.length?`<th class="sl-grp" colspan="${ringCols.length}">لاستیک</th>`:'')+`<th class="sl-grp" colspan="${3+extra.length}">سایر</th></tr><tr>`+
     `<th>#</th>`+(st.cat==='all'?`<th><span class="ab">Type</span><span class="fa">نوع رولیک</span></th>`:'')+
@@ -6190,7 +6204,7 @@ function slRender(){
   const shown=list.slice(0,st.limit);
   shown.forEach((it,i)=>{
     const w=has(it.weight)?it.weight:estWeight(it);
-    const cell=(k,cls)=>`<td class="num ${cls||''}">${has(it[k])?esc(it[k]):'<span style="color:#bbb">—</span>'}</td>`;
+    const cell=(k,cls)=>{const v=dispVal(it,k); return `<td class="num ${cls||''}">${has(v)?esc(v):'<span style="color:#bbb">—</span>'}</td>`;};
     h+=`<tr onclick="slShow('${esc(it.id)}')"><td>${i+1}</td>`+
       (st.cat==='all'?`<td style="text-align:right">${esc(catOf(it.cat).name)}</td>`:'')+
       `<td>${dutyBadge(it)}</td>`+cell('belt')+`<td>${esc(arrTxt(it.arr))}</td>`+
@@ -6219,8 +6233,8 @@ function renderCatsTable(){
       `<td><div class="sl-act"><button onclick="slEditCat(${i})">✏</button><button class="del" onclick="slDelCat(${i})">✕</button></div></td></tr>`).join('')+'</tbody>';
 }
 function renderLegend(){
-  const keys=['D','s','B','C','A','d','ch','bearing','ringOD','ringID','E','E1','a','b','t','nSide','nCenter','nRings','belt','arr','tir'];
-  $('sl_legend').innerHTML=keys.map(k=>`<div><b>${F[k].ab}</b> ${esc(k==='E'?'عرض لاستیک ضربه‌گیر / R دار میانی':F[k].fa)}${F[k].u?' ('+F[k].u+')':''}</div>`).join('')+
+  const keys=['D','s','B','C','A','d','ch','bearing','ringOD','ringID','a','b','t','nSide','nCenter','nRings','belt','arr','tir'];
+  $('sl_legend').innerHTML=`<div><b>ET</b> عرض لاستیک تخت (mm)</div><div><b>ER</b> عرض لاستیک خم / R دار (mm)</div>`+keys.map(k=>`<div><b>${F[k].ab}</b> ${esc(F[k].fa)}${F[k].u?' ('+F[k].u+')':''}</div>`).join('')+
     Object.keys(ARR).map(a=>`<div><b>${ARR[a].g}</b> ${ARR[a].fa}</div>`).join('');
   const ex=items.find(i=>i.id==='d_rings_108NL_650')||items.find(i=>catOf(i.cat).tpl==='rings')||items[0];
   if(ex) $('sl_legend_svg').innerHTML=svgOf(ex);
@@ -6248,13 +6262,14 @@ function svgOf(it){
   if(tpl==='rings'&&oe){
     const t=(+it.t||B-40), side=+it.nSide||2, cen=+it.nCenter||0, E1=+it.E1||45, E=+it.E||25, a=+it.a||side*E1, b=+it.b||((t-2*a)/(cen+1));
     const L=cx-t*sx/2, R=cx+t*sx/2;
-    for(let i=0;i<side;i++){g+=ring(L+(E1*i+E1/2)*sx,E1*sx-1,true); g+=ring(R-(E1*i+E1/2)*sx,E1*sx-1,true);}
-    const span=(cen-1)*b, c0=cx-span*sx/2; for(let i=0;i<cen;i++) g+=ring(c0+i*b*sx,E*sx,false);
+    const sF=sideT(it)==='T', cF=cenT(it)==='T';
+    for(let i=0;i<side;i++){g+=ring(L+(E1*i+E1/2)*sx,E1*sx-1,sF); g+=ring(R-(E1*i+E1/2)*sx,E1*sx-1,sF);}
+    const span=(cen-1)*b, c0=cx-span*sx/2; for(let i=0;i<cen;i++) g+=ring(c0+i*b*sx,E*sx,cF);
     const yT=cy-hR/2-14; g+=dim(L,R,yT-18,'t = '+t)+dim(L,L+a*sx,yT,'a = '+a);
     if(cen>1) g+=dim(c0,c0+b*sx,cy+hR/2+16,'b = '+Math.round(b));
-    g+=`<text x="${L+E1*sx/2}" y="${cy+hR/2+32}" text-anchor="middle" class="dl">E1=${E1}</text><text x="${c0}" y="${cy+hR/2+32}" text-anchor="middle" class="dl">E=${E}</text>`;
+    g+=`<text x="${L+E1*sx/2}" y="${cy+hR/2+32}" text-anchor="middle" class="dl">${RT[sideT(it)].ab}=${E1}</text><text x="${c0}" y="${cy+hR/2+32}" text-anchor="middle" class="dl">${RT[cenT(it)].ab}=${E}</text>`;
   }
-  if(tpl==='impact'&&oe) g+=`<text x="${cx}" y="${cy+hR/2+18}" text-anchor="middle" class="dl">E = ${esc(it.E)} × ${esc(it.nRings)}</text>`;
+  if(tpl==='impact'&&oe) g+=`<text x="${cx}" y="${cy+hR/2+18}" text-anchor="middle" class="dl">${RT[impT(it)].ab} = ${esc(it.E)} × ${esc(it.nRings)}</text>`;
   // dims
   const yb=H-18; g+=dim(X(A),X(-A),yb,'A = '+A)+dim(X(C),X(-C),yb-26,'C = '+C);
   if(tpl!=='rings'||!oe) g+=dim(X(B),X(-B),cy-Math.max(hD,hR)/2-16,'B = '+B); else g+=dim(X(B),X(-B),cy+Math.max(hD,hR)/2+48>yb-40?yb-52:cy+hR/2+48,'B = '+B);
@@ -6271,15 +6286,15 @@ function svgOf(it){
 function slShow(id){
   const it=items.find(i=>i.id===id); if(!it) return;
   const c=catOf(it.cat), s=serOf(it.series), tpl=c.tpl;
-  const row=(k,v)=>has(v)?`<tr><td><span class="ab">${F[k]?F[k].ab:''}</span>${esc(F[k]?fieldLabel(k,tpl):k)}</td><td><span dir="ltr">${v}${F[k]&&F[k].u?' '+F[k].u:''}</span></td></tr>`:'';
+  const row=(k,v)=>has(v)?`<tr><td><span class="ab">${F[k]?abOf(k,tpl):''}</span>${esc(F[k]?fieldLabel(k,tpl):k)}</td><td><span dir="ltr">${v}${F[k]&&F[k].u?' '+F[k].u:''}</span></td></tr>`:'';
   let t=`<table class="sl-spec">`+
     `<tr><td>نوع رولیک</td><td>${esc(c.name)}</td></tr>`+
     `<tr><td><span class="ab">Series</span>سری / کلاس کاری</td><td>${dutyBadge(it)} ${esc(s?s.duty:'')}</td></tr>`+
     row('belt',esc(it.belt))+`<tr><td><span class="ab">Arr.</span>چینش</td><td>${esc(arrTxt(it.arr))}</td></tr>`+
-    tplOf(it).fields.map(k=>row(k,esc(it[k]))).join('')+
+    tplOf(it).fields.map(k=>row(k,esc(dispVal(it,k)))).join('')+
     row('weight',has(it.weight)?esc(it.weight):(estWeight(it)?'≈ '+estWeight(it)+' (تقریبی)':''))+
     row('code',esc(it.code))+`<tr><td>منبع داده</td><td>${srcBadge(it)} ${esc((SRC[it.src]||SRC.draft).full)}</td></tr>`+row('note',esc(it.note))+`</table>`;
-  if(tpl==='rings'&&has(it.nSide)) t+=`<div class="sl-note">چینش لاستیک‌ها: ${it.nSide} تخت (E1=${esc(it.E1)}) | ${esc(it.nCenter)} R دار میانی (E=${esc(it.E)}) | ${it.nSide} تخت (E1=${esc(it.E1)}) — جمع ${esc(it.nRings)} عدد؛ لاستیک‌های تخت کناری با رینگ فولادی جوش‌شده به لوله مهار می‌شوند.</div>`;
+  if(tpl==='rings'&&has(it.nSide)){const sT=RT[sideT(it)],cT=RT[cenT(it)]; t+=`<div class="sl-note">چینش لاستیک‌ها: ${it.nSide} ${sT.fa} (${sT.ab}=${esc(it.E1)}) | ${esc(it.nCenter)} ${cT.fa} میانی (${cT.ab}=${esc(it.E)}) | ${it.nSide} ${sT.fa} (${sT.ab}=${esc(it.E1)}) — جمع ${esc(it.nRings)} عدد؛ لاستیک‌های کناری با رینگ فولادی جوش‌شده به لوله مهار می‌شوند.</div>`;}
   $('sl_detail_title').textContent=itemTitle(it);
   $('sl_detail_body').innerHTML=`<div style="margin-bottom:12px">${svgOf(it)}</div>${t}`;
   $('sl_detail_actions').innerHTML=`<button class="btn btn-secondary btn-sm" onclick="slClose('sl_detail_overlay')">بستن</button>
@@ -6294,7 +6309,9 @@ function slClose(id){$(id).classList.add('hidden');}
 // ---------- add / edit ----------
 function formHtml(o){
   const c=catOf(o.cat), tpl=c.tpl, flds=TPL[tpl]?TPL[tpl].fields:TPL.plain.fields;
-  const inp=(k)=>{const f=F[k];return `<div class="field"><label>${f.ab} — ${esc(fieldLabel(k,tpl))}${f.u?' ('+f.u+')':''}</label><input id="slf_${k}" type="${f.t==='num'?'number':'text'}" step="any" value="${esc(o[k]??'')}" oninput="slFormAuto('${k}')"></div>`;};
+  const inp=(k)=>{const f=F[k];
+    if(f.t==='rtype'){const cur=k==='sideType'?sideT(o):cenT(o); return `<div class="field"><label>${esc(f.fa)}</label><select id="slf_${k}" onchange="slFormAuto('${k}')">${Object.keys(RT).map(x=>`<option value="${x}" ${x===cur?'selected':''}>${RT[x].fa} — ${RT[x].ab}</option>`).join('')}</select></div>`;}
+    return `<div class="field"><label>${abOf(k,tpl)} — ${esc(fieldLabel(k,tpl))}${f.u?' ('+f.u+')':''}</label><input id="slf_${k}" type="${f.t==='num'?'number':'text'}" step="any" value="${esc(o[k]??'')}" oninput="slFormAuto('${k}')"></div>`;};
   const sel=(k,opts)=>`<div class="field"><label>${F[k].fa}</label><select id="slf_${k}" onchange="slFormAuto('${k}')">${opts}</select></div>`;
   let h=`<div class="sl-fs">عمومی</div>`+
     sel('cat',cats.map(x=>`<option value="${esc(x.k)}" ${x.k===o.cat?'selected':''}>${esc(x.name)}</option>`).join(''))+
@@ -6411,17 +6428,24 @@ function slToCalc(id){
   const radio=v=>{const r=document.querySelector('input[name=ring_type][value="'+v+'"]'); if(r){r.checked=true; call('ringTypeChange');}};
   if(tpl==='impact'){
     radio('impact'); setv('impact_inner',it.ringID); setv('impact_outer',it.ringOD); setv('impact_width',it.E); setv('impact_count',it.nRings);
-    const m=rubberMatch(it.ringID,it.ringOD,it.E,[it.ringType||'تخت','تخت']);
+    const m=rubberMatch(it.ringID,it.ringOD,it.E,[it.ringType||'تخت'].concat(typeWords(impT(it))));
     if(m){setv('impact_unit_price',m.price_rial); done.push('لاستیک ضربه‌گیر '+m.size+' '+m.type);} else warn.push('قیمت لاستیک '+it.ringID+'*'+it.ringOD+'*'+it.E+' در لیست قیمت یافت نشد');
     call('calcImpact');
   } else if(tpl==='rings'||tpl==='spiral'){
     radio('return');
     if(tpl==='rings'){
-      setv('ret_flat_inner',it.ringID); setv('ret_flat_outer',it.ringOD); setv('ret_flat_width',it.E1); setv('ret_flat_count',has(it.nSide)?2*it.nSide:'');
-      setv('ret_r_inner',it.ringID); setv('ret_r_outer',it.ringOD); setv('ret_r_width',it.E); setv('ret_r_count',it.nCenter);
-      const mf=rubberMatch(it.ringID,it.ringOD,it.E1,['تخت']); const mr=rubberMatch(it.ringID,it.ringOD,it.E,['گرد','لبه گرد','R']);
-      if(mf){setv('ret_flat_price',mf.price_rial); done.push('تخت '+mf.size);} else warn.push('قیمت لاستیک تخت '+it.ringID+'*'+it.ringOD+'*'+it.E1+' یافت نشد');
-      if(mr){setv('ret_r_price',mr.price_rial); done.push('R دار '+mr.size);} else warn.push('قیمت لاستیک R دار '+it.ringID+'*'+it.ringOD+'*'+it.E+' یافت نشد');
+      // گروه‌بندی لاستیک‌ها بر اساس نوع (ET / ER) و عرض
+      const grp=[]; const addG=(t,w,n)=>{if(!has(w)||!+n)return; const g=grp.find(x=>x.t===t&&+x.w===+w); if(g)g.n+=+n; else grp.push({t,w:+w,n:+n});};
+      addG(sideT(it),it.E1,has(it.nSide)?2*it.nSide:0); addG(cenT(it),it.E,it.nCenter);
+      let flat=grp.filter(x=>x.t==='T'), rr=grp.filter(x=>x.t==='R');
+      if(flat.length>1){rr=rr.concat(flat.slice(1)); flat=flat.slice(0,1);} if(!flat.length&&rr.length>1){flat=[rr.shift()];}
+      const fillRow=(pre,priceId,g)=>{
+        setv(pre+'_inner',g?it.ringID:''); setv(pre+'_outer',g?it.ringOD:''); setv(pre+'_width',g?g.w:''); const c=document.getElementById(pre+'_count'); if(c) c.value=g?g.n:0;
+        if(!g) return; const m=rubberMatch(it.ringID,it.ringOD,g.w,typeWords(g.t)); const lab=RT[g.t].ab+' '+RT[g.t].fa;
+        if(m){setv(priceId,m.price_rial); done.push(lab+' '+m.size+' ×'+g.n);} else warn.push('قیمت لاستیک '+lab+' '+it.ringID+'*'+it.ringOD+'*'+g.w+' یافت نشد');};
+      fillRow('ret_flat','ret_flat_price',flat[0]); fillRow('ret_r','ret_r_price',rr[0]);
+      if(flat[0]&&flat[0].t==='R') warn.push('ردیف «لاستیک تخت» فرم با لاستیک خم (ER) پر شد');
+      if(rr[0]&&rr[0].t==='T') warn.push('ردیف «لاستیک R دار» فرم با لاستیک تخت (ET) دوم پر شد');
     } else {
       setv('ret_flat_inner',it.ringID); setv('ret_flat_outer',it.ringOD); setv('ret_flat_width',it.E); setv('ret_flat_count',it.nRings); setv('ret_r_count',0);
       const m=rubberMatch(it.ringID,it.ringOD,it.E,[it.ringType||'مارپیچ']);
@@ -6438,7 +6462,7 @@ function slToCalc(id){
 // ---------- export ----------
 function exportCols(tpl){return ['cat','series'].concat(tpl==='rings'?['ringSeries']:[],['belt','arr'],TPL[tpl].fields,['weight','code','src','note']);}
 function hdr(k,tpl){return (k==='ringSeries'?'سری لاستیک':k==='cat'?'نوع رولیک':fieldLabel(k,tpl))+' ['+k+']';}
-function cellVal(it,k){if(k==='cat')return catOf(it.cat).name; if(k==='arr')return arrTxt(it.arr); if(k==='src')return (SRC[it.src]||{}).fa||it.src; return has(it[k])?it[k]:'';}
+function cellVal(it,k){if(k==='sideType'||k==='cenType')return dispVal(it,k); if(k==='cat')return catOf(it.cat).name; if(k==='arr')return arrTxt(it.arr); if(k==='src')return (SRC[it.src]||{}).fa||it.src; return has(it[k])?it[k]:'';}
 function groups(){const list=filtered(); const g={}; list.forEach(i=>{(g[i.cat]=g[i.cat]||[]).push(i);}); return {list,g};}
 function slExportXLSX(){
   if(typeof XLSX==='undefined'){alert('کتابخانه اکسل بارگذاری نشده (اتصال اینترنت را بررسی کنید).');return;}
@@ -6453,7 +6477,7 @@ function slExportXLSX(){
   const sc=['k','duty','d','bearing','ch','dC','dA','Ds','src','note'];
   const ws=XLSX.utils.aoa_to_sheet([['سری [k]','کلاس کاری [duty]','d [d]','بلبرینگ [bearing]','ch [ch]','ΔC [dC]','ΔA [dA]','D مجاز [Ds]','منبع [src]','توضیح [note]']].concat(series.map(s=>sc.map(k=>s[k]??''))));
   XLSX.utils.book_append_sheet(wb,ws,'Series');
-  const lg=XLSX.utils.aoa_to_sheet([['علامت','شرح']].concat(Object.keys(F).map(k=>[F[k].ab,F[k].fa+(F[k].u?' ('+F[k].u+')':'')])));
+  const lg=XLSX.utils.aoa_to_sheet([['علامت','شرح']].concat([['ET','عرض لاستیک تخت (mm)'],['ER','عرض لاستیک خم / R دار (mm)']],Object.keys(F).map(k=>[F[k].ab,F[k].fa+(F[k].u?' ('+F[k].u+')':'')])));
   XLSX.utils.book_append_sheet(wb,lg,'Legend');
   XLSX.writeFile(wb,'standard_rollers_'+(typeof nowJalali==='function'?nowJalali().replace(/\//g,'-'):Date.now())+'.xlsx');
 }
@@ -6474,6 +6498,7 @@ function slImportXLSX(ev){
           if(k==='cat'){const c=cats.find(c=>c.name===String(v)); o.cat=c?c.k:null; return;}
           if(k==='arr'){const a=Object.keys(ARR).find(a=>String(v).includes(ARR[a].fa)||String(v)===a); o.arr=a||String(v); return;}
           if(k==='src'){const s=Object.keys(SRC).find(s=>SRC[s].fa===String(v)||s===String(v)); o.src=s||'draft'; return;}
+          if(k==='sideType'||k==='cenType'){o[k]=/خم|ER|R دار|^R$/.test(String(v))?'R':'T'; return;}
           o[k]=F[k]&&F[k].t==='num'?num(v):String(v);});
         if(!o.cat) o.cat=catBySheet?catBySheet.k:(st.cat!=='all'?st.cat:'carry');
         if(!has(o.D)||!has(o.B)) return;
@@ -6490,9 +6515,9 @@ function slExportPDF(){
   const fdesc=Object.keys(st.f).filter(k=>st.f[k]).map(k=>(FILTERS.find(x=>x[0]===k)||[k,k])[1]+': '+st.f[k]).concat(st.q?['جستجو: '+st.q]:[]).join(' | ');
   let body='';
   Object.keys(g).forEach(ck=>{const c=catOf(ck), cols=exportCols(c.tpl).filter(k=>!['cat','note','src'].includes(k));
-    body+=`<h2>${esc(c.name)} <small>(${g[ck].length} ردیف)</small></h2><table><thead><tr>${cols.map(k=>`<th><b>${F[k]?F[k].ab:'Ring'}</b><br><span>${esc(k==='ringSeries'?'سری لاستیک':fieldLabel(k,c.tpl))}</span></th>`).join('')}</tr></thead><tbody>`+
+    body+=`<h2>${esc(c.name)} <small>(${g[ck].length} ردیف)</small></h2><table><thead><tr>${cols.map(k=>`<th><b>${F[k]?abOf(k,c.tpl):'Ring'}</b><br><span>${esc(k==='ringSeries'?'سری لاستیک':fieldLabel(k,c.tpl))}</span></th>`).join('')}</tr></thead><tbody>`+
       g[ck].map(it=>`<tr>${cols.map(k=>`<td>${esc(k==='series'?it.series+(serOf(it.series)?' ('+serOf(it.series).duty+')':''):cellVal(it,k))}</td>`).join('')}</tr>`).join('')+`</tbody></table>`;});
-  const legend=Object.keys(F).filter(k=>!['cat','series','code','src','note'].includes(k)).map(k=>`<span><b>${F[k].ab}</b> ${esc(F[k].fa)}</span>`).join('');
+  const legend=`<span><b>ET</b> عرض لاستیک تخت</span><span><b>ER</b> عرض لاستیک خم (R دار)</span>`+Object.keys(F).filter(k=>!['cat','series','code','src','note','E','E1','sideType','cenType'].includes(k)).map(k=>`<span><b>${F[k].ab}</b> ${esc(F[k].fa)}</span>`).join('');
   const html=`<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="UTF-8"><title>سایزهای استاندارد رولیک</title>
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
 <style>@page{size:A4 landscape;margin:10mm}body{font-family:Vazirmatn,Tahoma,sans-serif;color:#241729;font-size:11px}
