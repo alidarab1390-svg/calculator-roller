@@ -1,0 +1,26 @@
+/* متن‌های رابط کاربری — دو زبانه */
+const I18N = {
+  app: b('رولیک و استانداردها — آسارول', 'Rollers & Standards — Asaroul'),
+  subtitle: b('مرجع مهندسی رولیک، لوله، شافت، لاستیک، پایه و آزمایش‌ها · DIN / ISO / CEMA', 'Engineering reference for rollers, tubes, shafts, rubber, frames and tests · DIN / ISO / CEMA'),
+  gsearch_ph: b('🔍 جستجو در همه بخش‌ها… (مثلاً PSV2 133 یا 6205 یا NL)', '🔍 Search everything… (e.g. PSV2 133, 6205, NL)'),
+  search_ph: b('🔍 جستجوی سریع در این جدول', '🔍 Quick search in this table'),
+  locked_on: b('قفل', 'Locked'), locked_off: b('باز', 'Unlocked'),
+  add: b('افزودن', 'Add'), reset: b('بازگردانی پیش‌فرض', 'Restore defaults'), all: b('همه', 'All'), clear: b('حذف فیلترها', 'Clear filters'),
+  none: b('موردی یافت نشد', 'Nothing found'), rows: b('ردیف', 'rows'), more: b('نمایش بیشتر', 'Show more'), source: b('منبع', 'Source'),
+  print: b('چاپ / PDF', 'Print / PDF'), edit: b('ویرایش', 'Edit'), copy: b('کپی', 'Duplicate'), del: b('حذف', 'Delete'),
+  need_unlock: b('برای تغییر اطلاعات ابتدا قفل را با رمز باز کنید', 'Unlock with the password to change data'),
+  save: b('ذخیره', 'Save'), cancel: b('انصراف', 'Cancel'), close: b('بستن', 'Close'), saved: b('ذخیره شد', 'Saved'),
+  confirm_del: b('این ردیف حذف شود؟', 'Delete this row?'),
+  confirm_reset: b('همه تغییرات این جدول حذف و داده پیش‌فرض بازگردانده شود؟', 'Discard all changes in this table and restore defaults?'),
+  confirm_reset_all: b('همه تغییرات همه جدول‌ها حذف شود؟', 'Discard all changes in all tables?'),
+  popup: b('مرورگر پنجره چاپ را مسدود کرد — اجازه Pop-up بدهید', 'The browser blocked the print window — allow pop-ups'),
+  unlock_t: b('باز کردن قفل ویرایش', 'Unlock editing'),
+  unlock_d: b('مشاهده، جستجو، محاسبه و خروجی برای همه آزاد است. افزودن، ویرایش و حذف اطلاعات فقط با رمز مدیر ممکن است.', 'Viewing, search, calculations and export are open to everyone. Adding, editing and deleting data needs the admin password.'),
+  password: b('رمز عبور', 'Password'), unlock: b('باز کردن', 'Unlock'), wrong_pw: b('رمز اشتباه است', 'Wrong password'),
+  unlocked_msg: b('ویرایش فعال شد (تا بستن مرورگر)', 'Editing enabled (until the browser is closed)'),
+  settings: b('تنظیمات مدیر', 'Admin settings'), new_pw: b('رمز جدید', 'New password'), new_pw2: b('تکرار رمز جدید', 'Repeat new password'),
+  change_pw: b('تغییر رمز (روی همین کامپیوتر)', 'Change password (this computer)'),
+  pkg_d: b('تغییرات اطلاعات روی همین کامپیوتر ذخیره می‌شود. برای انتقال به کامپیوترهای دیگر، «خروجی تغییرات» بگیرید و در آن‌ها «ورود تغییرات» کنید.', 'Data changes are stored on this computer. To share them, export changes here and import them on other computers.'),
+  export_pkg: b('خروجی تغییرات', 'Export changes'), import_pkg: b('ورود تغییرات', 'Import changes'), reset_all: b('حذف همه تغییرات', 'Discard all changes'),
+  lock_now: b('قفل کردن', 'Lock now'), footer: b('آسارول — نرم‌افزار مرجع مهندسی، بدون اطلاعات قیمت. مقادیر «مرجع عمومی» را با استاندارد و کاتالوگ تطبیق دهید.', 'Asaroul — engineering reference software, no pricing data. Verify "general reference" values against the standards and catalogues.')
+};
