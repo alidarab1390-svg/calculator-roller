@@ -407,7 +407,7 @@ const STEEL_TUBES = (() => {
     out.push({id:`st|${D}|${s}`, D, s, Di, kgm:+(Math.PI*(D*D-Di*Di)/4*7.85e-3).toFixed(2), inch:inch[D]||'', roll:roll[D]||'',
       std:'EN 10219 / EN 10217-1 (ERW) · DIN 2458', src:'ref'});
   }));
-  return out;
+  return out.sort((x,y) => x.D-y.D || x.s-y.s);
 })();
 
 /* ── لوله پلیمری ── */
@@ -1112,7 +1112,7 @@ function renderAll(){
   $('lock_btn').innerHTML = APP.unlocked ? '🔓 ' + L(I18N.locked_off) : '🔒 ' + L(I18N.locked_on);
   document.title = L(I18N.app);
   $('tabs').innerHTML = TABS.map(T => `<button class="tab ${APP.tab===T.k?'on':''}" onclick="go('${T.k}')">${T.icon} ${esc(L(T.t))}</button>`).join('');
-  renderTab();
+  renderTab(); placeCredit();
 }
 function renderTab(){
   const T = TABS.find(x => x.k === APP.tab) || TABS[0];
@@ -1496,6 +1496,7 @@ function printHtml(title, body){
   .spec{display:grid;grid-template-columns:repeat(3,1fr);gap:3px}.spec div{border:1px solid #ddd0e2;padding:3px 8px;display:flex;justify-content:space-between;gap:8px}
   .spec em{font-style:normal;font-weight:700;direction:ltr}.note,.body{line-height:1.9}.lk,.btn{display:none}.f td{height:22px}</style></head><body>
   <div class="hd"><img src="${LOGO}"><div><h2>${esc(title)}</h2><div>${esc(L(I18N.app))} — ${new Date().toLocaleDateString(APP.lang==='fa'?'fa-IR':'en-GB')}</div></div></div>${body}
+  <p style="margin-top:14px;border-top:1px solid #ddd0e2;padding-top:6px;font-weight:700">${esc(creditText())}</p>
   <script>setTimeout(function(){window.print()},400)<\/script></body></html>`);
   w.document.close();
 }
@@ -1513,6 +1514,7 @@ window.dsXlsx = k => {
   if (typeof XLSX === 'undefined') return toast('Excel library missing');
   const cols = D.cols.filter(c => list.some(r => has(cellText(c, r))));
   const aoa = [cols.map(c => (c.ab ? c.ab+' — ' : '') + L(c.l) + (c.u ? ' ('+c.u+')' : ''))].concat(list.map(r => cols.map(c => { const v = cellText(c, r); return c.n && has(r[c.k]) && !isNaN(+r[c.k]) ? +r[c.k] : v; })));
+  aoa.push([], [creditText()]);
   const ws = XLSX.utils.aoa_to_sheet(aoa); ws['!cols'] = cols.map(c => ({wch: c.n ? 10 : 24}));
   const wb = XLSX.utils.book_new(); wb.Workbook = {Views:[{RTL: APP.lang === 'fa'}]};
   XLSX.utils.book_append_sheet(wb, ws, (L(D.title).replace(/[\\\/\?\*\[\]:]/g,' ')).slice(0,31));
@@ -1590,6 +1592,21 @@ window.importPkg = ev => {
     catch(e){ toast('⛔ ' + L(b('فایل نامعتبر است','Invalid file'))); } }; rd.readAsText(f);
 };
 window.resetAll = () => { if (!need() || !confirm(L(I18N.confirm_reset_all))) return; Object.keys(DS).forEach(k => { localStorage.removeItem('rs_ds_'+k); delete ROWS[k]; }); closeModal(); renderAll(); };
+
+
+/* ─────────────── اطلاعات سازنده (غیرقابل تغییر از داخل نرم‌افزار) ─────────────── */
+const CREDIT = Object.freeze(JSON.parse(new TextDecoder().decode(Uint8Array.from(atob('eyJmYSI6ICLYt9ix2KfYrduMINmIINiz2KfYrtiqOiDYudmE24zYsdi22Kcg2K/Yp9ix2KfYqCDigJQg2KrZhNmB2YY6IDA5MTI2MDMzNTMwIiwgImVuIjogIkRlc2lnbmVkICYgZGV2ZWxvcGVkIGJ5IEFsaXJlemEgRGFyYWIg4oCUIFRlbDogKzk4IDkxMiA2MDMgMzUzMCJ9'), c => c.charCodeAt(0)))));
+const creditText = () => CREDIT[APP.lang] || CREDIT.fa;
+const CREDIT_STYLE = 'display:block!important;visibility:visible!important;opacity:1!important;position:static!important;font-weight:700!important;color:#3b1f47!important;font-size:.85rem!important;margin-top:6px!important';
+function placeCredit(){
+  let el = document.getElementById('rs_credit');
+  const ft = document.querySelector('footer') || document.body;
+  if (!el || !document.body.contains(el)){ el = document.createElement('div'); el.id = 'rs_credit'; ft.appendChild(el); }
+  if (el.textContent !== creditText()) el.textContent = creditText();
+  if (el.getAttribute('style') !== CREDIT_STYLE) el.setAttribute('style', CREDIT_STYLE);
+  if (ft.style && ft !== document.body){ ft.style.removeProperty('display'); ft.style.removeProperty('visibility'); }
+}
+new MutationObserver(() => placeCredit()).observe(document.documentElement, {childList:true, subtree:true, attributes:true, characterData:true});
 
 /* ─────────────── مودال، پیام، زبان ─────────────── */
 function openModal(title, body, foot){ $('modal_t').textContent = title; $('modal_b').innerHTML = body; $('modal_f').innerHTML = foot || ''; $('modal').classList.remove('hidden'); $('modal_b').scrollTop = 0; }

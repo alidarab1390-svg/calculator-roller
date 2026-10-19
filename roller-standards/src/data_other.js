@@ -22,7 +22,7 @@ const STEEL_TUBES = (() => {
     out.push({id:`st|${D}|${s}`, D, s, Di, kgm:+(Math.PI*(D*D-Di*Di)/4*7.85e-3).toFixed(2), inch:inch[D]||'', roll:roll[D]||'',
       std:'EN 10219 / EN 10217-1 (ERW) · DIN 2458', src:'ref'});
   }));
-  return out;
+  return out.sort((x,y) => x.D-y.D || x.s-y.s);
 })();
 
 /* ── لوله پلیمری ── */
