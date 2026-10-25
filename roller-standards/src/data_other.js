@@ -3,7 +3,7 @@
    مقادیر «مرجع/عمومی» قابل ویرایش هستند و باید با کاتالوگ و استاندارد مربوط تطبیق داده شوند.
 ═══════════════════════════════════════════════════════════════ */
 const SRC = {
-  rm:   b('کاتالوگ Rulmeca', 'Rulmeca catalogue'),
+  rm:   b('استاندارد آسارول (ASA)', 'Asaroll standard (ASA)'),
   iso:  b('ISO 1537 / DIN 15207', 'ISO 1537 / DIN 15207'),
   cema: b('CEMA 502 / 550', 'CEMA 502 / 550'),
   din:  b('DIN / EN', 'DIN / EN'),
@@ -131,10 +131,10 @@ const CEMA_SPACING = [
   ['60',[4.5,4.5,4.0,3.5,3.5,3.5],10],['72',[4.5,4.0,4.0,3.5,3.5,3.0],8],['84',[4.0,4.0,3.5,3.5,3.0,3.0],8],['96',[4.0,4.0,3.5,3.5,3.0,3.0],8]
 ];
 const CEMA_DENS = [35,50,75,100,150,200];
-/* فاصله رولیک‌ها — Rulmeca / DIN (m): عرض نوار → چگالی <1.2، 1.2–2.0، >2.0 */
+/* فاصله رولیک‌ها — ASA / DIN (m): عرض نوار → چگالی <1.2، 1.2–2.0، >2.0 */
 const DIN_SPACING = [['300 – 650',[1.65,1.50,1.40],3.0],['800 – 1000',[1.50,1.35,1.25],3.0],['1200 – 2200',[1.40,1.25,1.20],3.0]];
 
-/* ضرایب محاسبه بار رولیک (Rulmeca) */
+/* ضرایب محاسبه بار رولیک (روش ASA) */
 const FP = {flat:1.00, v2:0.50, t20:0.60, t25:0.625, t30:0.65, t35:0.67, t40:0.70, t45:0.72};
 const FD_SPEEDS = [2,2.5,3,3.5,4];
 const FD = [
@@ -184,7 +184,7 @@ const TESTS = [
    acc:b('پیش‌فرض: ≤ 0.7 mm','Default: ≤ 0.7 mm'), freq:b('نمونه از هر بچ','Sample per batch'),
    steps:b(['شافت ثابت شود و اندیکاتور روی پیشانی لوله قرار گیرد.','لوله با دست در دو جهت محوری کشیده/فشرده شود.','جابه‌جایی کل ثبت شود.'],
             ['Fix the shaft; put the indicator on the tube end face.','Push/pull the tube axially both ways by hand.','Record total movement.'])},
-  {code:'T05', name:b('خیز و شیب شافت زیر بار','Shaft deflection / slope under load'), ref:'CEMA 502 · Rulmeca',
+  {code:'T05', name:b('خیز و شیب شافت زیر بار','Shaft deflection / slope under load'), ref:'CEMA 502 · ASA',
    eq:b('پرس یا وزنه، اندیکاتور، تکیه‌گاه‌هایی به فاصله C','Press or weights, indicator, supports at span C'),
    acc:b('شیب شافت در محل بلبرینگ ≤ 0.0025 rad (حدود ۹ دقیقه)','Shaft slope at bearing ≤ 0.0025 rad (≈ 9′)'),
    freq:b('تأیید طرح (Type test)','Design verification (type test)'),
@@ -208,7 +208,7 @@ const TESTS = [
    freq:b('نمونه از هر بچ','Sample per batch'),
    steps:b(['صدای زمینه ثبت شود.','رولیک با دور کاری چرخانده و صدا در فاصله ۱ متر اندازه‌گیری شود.','صدای ضربه‌ای/غیرعادی بلبرینگ گزارش شود.'],
             ['Record background noise.','Rotate at service speed; measure at 1 m.','Report knocking/abnormal bearing noise.'])},
-  {code:'T09', name:b('تست دوام و دمای بلبرینگ','Endurance & bearing temperature'), ref:'Rulmeca · CEMA 502',
+  {code:'T09', name:b('تست دوام و دمای بلبرینگ','Endurance & bearing temperature'), ref:'ASA · CEMA 502',
    eq:b('دستگاه تست با بار شعاعی و دور ثابت، دماسنج لیزری/ترموکوپل','Rig with radial load and constant speed, IR thermometer/thermocouple'),
    acc:b('پیش‌فرض: افزایش دما نسبت به محیط ≤ 40 °C و بدون صدای غیرعادی پس از ۲۴ ساعت','Default: temperature rise ≤ 40 °C over ambient, no abnormal noise after 24 h'),
    freq:b('تأیید طرح','Design verification'),
@@ -232,13 +232,13 @@ const TESTS = [
    freq:b('هر بچ لاستیک','Each rubber batch'),
    steps:b(['نمونه حداقل ۶ میلی‌متر ضخامت داشته باشد و در دمای ۲۳ درجه نگه داشته شود.','در ۵ نقطه با فاصله اندازه‌گیری و پس از ۳ ثانیه قرائت شود.','میانگین ثبت شود.'],
             ['Specimen ≥ 6 mm thick, conditioned at 23 °C.','Measure at 5 points, read after 3 s.','Record the average.'])},
-  {code:'T13', name:b('چسبندگی/لغزش رینگ روی لوله','Ring adhesion / slip on tube'), ref:'Rulmeca (مرجع)',
+  {code:'T13', name:b('چسبندگی/لغزش رینگ روی لوله','Ring adhesion / slip on tube'), ref:'ASA',
    eq:b('آچار گشتاورسنج یا نیروسنج محوری','Torque wrench or axial force gauge'),
    acc:b('رینگ در گشتاور/نیروی تعیین‌شده نچرخد و جابه‌جا نشود','Ring must not rotate or slide at the specified torque/force'),
    freq:b('نمونه از هر بچ مونتاژ','Sample per assembly batch'),
    steps:b(['لوله ثابت شود.','گشتاور مماسی/نیروی محوری به رینگ اعمال شود.','لغزش یا جابه‌جایی ثبت شود.'],
             ['Fix the tube.','Apply tangential torque / axial force to the ring.','Record any slip or movement.'])},
-  {code:'T14', name:b('بار استاتیک و ضربه','Static load & impact (drop) test'), ref:'CEMA 502 · Rulmeca',
+  {code:'T14', name:b('بار استاتیک و ضربه','Static load & impact (drop) test'), ref:'CEMA 502 · ASA',
    eq:b('پرس هیدرولیک، وزنه سقوط آزاد','Hydraulic press, drop weight'),
    acc:b('بدون تغییر شکل دائم لوله، ترک جوش یا آسیب بلبرینگ','No permanent tube deformation, weld crack or bearing damage'),
    freq:b('تأیید طرح','Design verification'),
@@ -280,7 +280,7 @@ const GLOSSARY = [
   ['ch',b('عرض تخت (آچارخور) سر شافت','Width across spindle flats')],['e',b('فاصله تخت تا انتهای لوله','Flat to tube end distance')],['g',b('طول تخت سر شافت','Flat length')],
   ['øe',b('قطر خارجی رینگ لاستیکی','Rubber ring outside diameter')],['øi',b('قطر داخلی رینگ لاستیکی','Rubber ring bore')],
   ['ET',b('عرض لاستیک تخت','Flat ring width')],['ER',b('عرض لاستیک خم / نوک‌تیز (R دار)','Curved / pointed ring width')],
-  ['E / E1',b('عرض رینگ (کاتالوگ رولمکا: E نوک‌تیز/ضربه‌گیر، E1 تخت)','Ring width (Rulmeca: E pointed/impact, E1 flat)')],
+  ['E / E1',b('عرض رینگ (کد معادل: E نوک‌تیز/ضربه‌گیر، E1 تخت)','Ring width (equivalent code: E pointed/impact, E1 flat)')],
   ['a',b('طول دسته رینگ کناری','Side ring set length')],['b',b('فاصله رینگ‌های میانی','Pitch of central rings')],['t',b('فاصله بین دسته‌های کناری','Distance between side sets')],
   ['L',b('طول بخش مارپیچ','Helix length')],['BW',b('عرض نوار','Belt width')],['λ',b('زاویه ناودانی','Troughing angle')],['β',b('زاویه سرریز (Surcharge) دینامیکی','Dynamic surcharge angle')],
   ['δ',b('زاویه شیب نوار','Conveyor inclination')],['v',b('سرعت نوار','Belt speed')],['ρ',b('چگالی توده‌ای مواد','Bulk density')],
@@ -291,8 +291,9 @@ const GLOSSARY = [
   ['Fs',b('ضریب سرویس (ساعت کار)','Service factor (operating hours)')],['Fm',b('ضریب محیط','Environment factor')],
   ['C / C0',b('ظرفیت بار دینامیکی / استاتیکی بلبرینگ','Bearing dynamic / static load rating')],['L10h',b('عمر اسمی بلبرینگ (ساعت)','Bearing basic rating life (hours)')],
   ['TIR',b('لنگی کل قرائت‌شده (Run-out)','Total indicated run-out')],
-  ['NA',b('رولیک ضربه‌گیر','Impact roller')],['NG',b('برگشت با رینگ نوک‌تیز','Return with pointed rings')],['NL',b('برگشت با دسته تخت کناری + نوک‌تیز میانی','Return with flat side sets + pointed centre')],
-  ['NC',b('برگشت V با رینگ','V-return with rings')],['NM',b('خودتمیزکن مارپیچ لاستیکی','Self-cleaning rubber helix')],['S / NS',b('خودتمیزکن فنر فولادی','Self-cleaning steel spiral')],
+  ['ASA',b('کدگذاری استاندارد آسارول؛ کد معادل با فونت ریز داخل پرانتز','Asaroll standard coding; equivalent code in small type in brackets')],
+  ['IR (NA)',b('رولیک ضربه‌گیر','Impact roller')],['RP (NG)',b('برگشت با رینگ نوک‌تیز','Return with pointed rings')],['RF (NL)',b('برگشت با دسته تخت کناری + نوک‌تیز میانی','Return with flat side sets + pointed centre')],
+  ['RV (NC)',b('برگشت V با رینگ','V-return with rings')],['HX (NM)',b('خودتمیزکن مارپیچ لاستیکی','Self-cleaning rubber helix')],['SP / SN (S / NS)',b('خودتمیزکن فنر فولادی','Self-cleaning steel spiral')],
   ['F / B',b('نوع سر شافت در کد سفارش (F: تخت‌دار، B: بوش‌دار)','Spindle end in order code (F: flats, B: bush)')],
   ['CEMA B…F',b('کلاس رولیک طبق CEMA 502','Idler class per CEMA 502')]
 ].map(([ab,desc]) => ({id:'gl|'+ab, ab, desc}));

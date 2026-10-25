@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════
-   داده رولیک‌های استاندارد — منبع: کاتالوگ Rulmeca (Bulk Handling, Rollers)
-   · ISO 1537 · DIN 15207 — منتقل‌شده از ماژول «استاندارد رولیک» نسخه 11.6
-   Standard roller data — Rulmeca catalogue / ISO 1537 / DIN 15207
+   داده رولیک‌های استاندارد آسارول (ASA) — مطابق ISO 1537 · DIN 15207
+   Asaroll (ASA) standard roller data — per ISO 1537 / DIN 15207
+   کلیدهای داخلی سری/طرح، کد معادل هستند که در نمایش داخل پرانتز می‌آیند.
 ═══════════════════════════════════════════════════════════════ */
 const b = (fa, en) => ({ fa, en });
 
@@ -67,14 +67,21 @@ const DIAS = {
   PSV7:{108:[4,380,2500],133:[4,380,2500],159:[4.5,380,3150],194:[6.3,600,3150]}
 };
 
+/* کدگذاری آسارول (ASA) ← کد معادل */
+const ASA_SER = {RTL1:'ASA-L0', M1:'ASA-L1', MPR15:'ASA-L2', MPS1:'ASA-L3', PL4:'ASA-P4', PLF5:'ASA-P5', PSV1:'ASA-1', PSV2:'ASA-2', PSV3:'ASA-3',
+  PSV4:'ASA-4', PSV5:'ASA-5', PSV7:'ASA-7', PSV91:'ASA-S1', PSV92:'ASA-S2', PSV94:'ASA-S4'};
+const ASA_DES = {N:'N', V:'V', NA:'IR', NG:'RP', NL:'RF', NC:'RV', NM:'HX', S:'SP', NS:'SN'};
+const ASA_GUIDE = {'PS/G1':'ASA-G1', 'PS/G2':'ASA-G2', 'PS/G3':'ASA-G3', 'PS/G7':'ASA-G7', 'MPS/G7':'ASA-L3/G7', 'M/G7':'ASA-L1/G7', 'RTL/G7':'ASA-L0/G7'};
+const asaSer = k => ASA_SER[k] || ASA_GUIDE[k] || k;
+const asaDes = k => ASA_DES[k] || k;
 const ROLLER_CATS = {
   carry:  {icon:'⬆️', t:b('رفت ساده','Carrying (plain)')},
   ret:    {icon:'⬇️', t:b('برگشت ساده','Return (plain)')},
-  impact: {icon:'💥', t:b('ضربه‌گیر (NA)','Impact (NA)')},
-  retring:{icon:'⭕', t:b('برگشت لاستیکی (NG · NL)','Return with rings (NG · NL)')},
-  retv:   {icon:'✌️', t:b('برگشت لاستیکی V (NC)','V-return with rings (NC)')},
-  helix:  {icon:'🌀', t:b('خودتمیزکن مارپیچ لاستیکی (NM)','Self-cleaning rubber helix (NM)')},
-  cage:   {icon:'🧹', t:b('خودتمیزکن فنر فولادی (S)','Self-cleaning steel spiral (S)')},
+  impact: {icon:'💥', t:b('ضربه‌گیر (IR)','Impact (IR)')},
+  retring:{icon:'⭕', t:b('برگشت لاستیکی (RP · RF)','Return with rings (RP · RF)')},
+  retv:   {icon:'✌️', t:b('برگشت لاستیکی V (RV)','V-return with rings (RV)')},
+  helix:  {icon:'🌀', t:b('خودتمیزکن مارپیچ لاستیکی (HX)','Self-cleaning rubber helix (HX)')},
+  cage:   {icon:'🧹', t:b('خودتمیزکن فنر فولادی (SP)','Self-cleaning steel spiral (SP)')},
   guide:  {icon:'↔️', t:b('راهنما (Guide)','Guide (vertical)')}
 };
 
@@ -148,6 +155,7 @@ function buildRollers(){
     return Object.assign({ser, duty:S.duty, D, s, B, C:B+8, A:B+(S.addA||26), d:S.d, ch:S.ch, e:S.e, g:S.g, brg:S.brg, mat:S.mat}, extra||{});
   };
   const code = (r, des) => `${r.ser},${r.d}${(SER[r.ser]||{}).fl||'F'},${r.oe||r.D}${des},${r.C}`;
+  const asaCode = r => `${asaSer(r.ser)}·${r.d}${(SER[r.ser]||{}).fl||'F'}·${r.oe||r.D}${asaDes(r.design)}·${r.C}`;
   Object.keys(DIAS).forEach(ser => {
     const des = SER[ser].design || 'N';
     Object.entries(DIAS[ser]).forEach(([D,[s,mn,mx]]) => {
@@ -198,6 +206,7 @@ function buildRollers(){
       note:b('رولیک راهنمای عمودی لبه نوار — طول شافت طبق نقشه قاب','Vertical belt-edge guide roller — spindle length per frame drawing')});
   });
   const seen = {};
+  out.forEach(r => { r.eqcode = r.code; r.code = r.cat==='guide' ? `${asaSer(r.ser)}·${r.d}·${r.D}N·${r.B}` : asaCode(r); });
   out.forEach(r => {
     let id = [r.cat,r.ser,r.D,r.oe||'',r.design,r.arr,r.bw||'',r.B,r.M||''].join('|');
     if (seen[id]) { seen[id]++; id += '#'+seen[id]; } else seen[id] = 1;

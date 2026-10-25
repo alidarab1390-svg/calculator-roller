@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   رولیک و استانداردها — آسارول  |  Rollers & Standards — Asaroul
+   رولیک و استانداردها — آسارول  |  Rollers & Standards — Asaroll
    نرم‌افزار مستقل مرجع مهندسی (بدون قیمت‌گذاری) — کاملاً آفلاین
 ═══════════════════════════════════════════════════════════════ */
 'use strict';
@@ -16,9 +16,18 @@ const $ = id => document.getElementById(id);
 const fx = (v, d) => (v == null || isNaN(v)) ? '—' : (+v).toLocaleString('en-US', {maximumFractionDigits: d == null ? 2 : d});
 const DEG = Math.PI / 180;
 
+/* ─────────────── عکس محصولات (در زمان ساخت از پوشه src/photos جاسازی می‌شود) ─────────────── */
+const photoHtml = key => {
+  if (typeof PHOTOS === 'undefined' || !key) return '';
+  const ks = Object.keys(PHOTOS).filter(k => k === key || k.startsWith(key + '-')).sort();
+  return ks.length ? `<div class="phs">${ks.map(k => `<img src="${PHOTOS[k]}" alt="${esc(k)}" onclick="this.classList.toggle('big')">`).join('')}</div>` : '';
+};
 /* ─────────────── تعریف جدول‌ها (Datasets) ─────────────── */
 const lvBar = lv => `<span class="lv" title="${lv}/7">${'▮'.repeat(lv||0)}<i>${'▮'.repeat(7-(lv||0))}</i></span>`;
-const serBadge = r => `<span class="badge">${esc(r.ser||'')}</span>`;
+const eqs = (main, eq) => `${esc(main)}${eq && eq !== main ? ` <small class="eq">(${esc(eq)})</small>` : ''}`;
+const serBadge = r => `<span class="badge">${esc(asaSer(r.ser))}</span>${asaSer(r.ser) !== r.ser ? ` <small class="eq">(${esc(r.ser)})</small>` : ''}`;
+const serText = r => asaSer(r.ser) + (asaSer(r.ser) !== r.ser ? ' (' + r.ser + ')' : '');
+const serOpts = () => Object.keys(SER).map(k => [k, asaSer(k) + ' (' + k + ')']);
 const srcLab = r => L(SRC[r.src]) || '';
 const rt = (r, k) => k === 'E1' ? (r.sideT || (has(r.E1) ? 'ET' : '')) : (r.cenT || r.rt || '');
 
@@ -28,9 +37,9 @@ const DS = {
     chips:{k:'cat', map:ROLLER_CATS},
     cols:[
       {k:'cat', l:b('نوع رولیک','Roller type'), hide:true, fmt:r => L((ROLLER_CATS[r.cat]||{}).t), opts:() => Object.keys(ROLLER_CATS).map(k => [k, L(ROLLER_CATS[k].t)])},
-      {k:'ser', ab:'Series', l:b('سری','Series'), f:1, html:serBadge},
+      {k:'ser', ab:'Series', l:b('سری','Series'), f:1, html:serBadge, fmt:serText, opts:serOpts},
       {k:'duty', l:b('کلاس کاری','Duty class'), f:1, fmt:r => L(DUTY[r.duty]) || L(r.duty), opts:() => Object.keys(DUTY).map(k => [k, L(DUTY[k])])},
-      {k:'design', ab:'Design', l:b('طرح','Design'), f:1},
+      {k:'design', ab:'Design', l:b('طرح','Design'), f:1, fmt:r => r.design ? asaDes(r.design) + (asaDes(r.design) !== r.design ? ' (' + r.design + ')' : '') : '', html:r => r.design ? eqs(asaDes(r.design), r.design) : '', opts:() => Object.keys(ASA_DES).map(k => [k, asaDes(k) + ' (' + k + ')'])},
       {k:'bw', ab:'BW', l:b('عرض نوار','Belt width'), u:'mm', n:1, f:1},
       {k:'arr', l:b('چیدمان','Arrangement'), f:1, fmt:r => L(ARR[r.arr]) || L(r.arr), opts:() => Object.keys(ARR).map(k => [k, L(ARR[k])])},
       {k:'D', ab:'D', l:b('قطر لوله','Tube dia.'), u:'mm', n:1, f:1},
@@ -61,17 +70,17 @@ const DS = {
       {k:'g', ab:'g', l:b('طول تخت','Flat length'), u:'mm', n:1, hide:true},
       {k:'wt', ab:'kg', l:b('وزن','Weight'), u:'kg', n:1},
       {k:'mat', l:b('جنس','Material'), hide:true, fmt:r => L(MAT[r.mat]) || L(r.mat)},
-      {k:'code', ab:'Code', l:b('کد سفارش (Rulmeca)','Order code (Rulmeca)')},
+      {k:'code', ab:'Code', l:b('کد سفارش ASA','ASA order code'), fmt:r => (r.code||'') + (r.eqcode ? ' (' + r.eqcode + ')' : ''), html:r => `<span dir="ltr">${eqs(r.code||'', r.eqcode)}</span>`},
       {k:'note', l:b('توضیحات','Notes'), hide:true}
     ],
-    rowTitle: r => `${(ROLLER_CATS[r.cat]||{}).icon||''} ${L((ROLLER_CATS[r.cat]||{}).t)} — ${r.ser} Ø${r.oe||r.D||''}${r.B?' × '+r.B:''}`,
-    detail: r => SV.roller(r) +
-      `<p class="note">${L(b('C = B + 8 و A = B + ΔA سری (طبق جداول رولمکا). کد سفارش به سبک رولمکا: سری، d + نوع سر شافت، قطر + طرح، C.','C = B + 8 and A = B + series ΔA (Rulmeca tables). Rulmeca-style order code: series, d + spindle end, diameter + design, C.'))}</p>`
+    rowTitle: r => `${(ROLLER_CATS[r.cat]||{}).icon||''} ${L((ROLLER_CATS[r.cat]||{}).t)} — ${asaSer(r.ser)} Ø${r.oe||r.D||''}${r.B?' × '+r.B:''}`,
+    detail: r => photoHtml('roller-' + r.cat) + SV.roller(r) +
+      `<p class="note">${L(b('C = B + 8 و A = B + ΔA سری (استاندارد ASA). کد سفارش ASA: سری · d + نوع سر شافت · قطر + طرح · C ؛ کد معادل با فونت ریز داخل پرانتز آمده است.','C = B + 8 and A = B + series ΔA (ASA standard). ASA order code: series · d + spindle end · diameter + design · C; the equivalent code is shown in small type in brackets.'))}</p>`
   },
   series: {
-    icon:'🏷', title:b('سری‌ها و کلاس کاری (Rulmeca / DIN)','Series & duty class (Rulmeca / DIN)'), src:'rm', rows: buildSeries,
+    icon:'🏷', title:b('سری‌ها و کلاس کاری (ASA / DIN)','Series & duty class (ASA / DIN)'), src:'rm', rows: buildSeries,
     cols:[
-      {k:'ser', ab:'Series', l:b('سری','Series'), html:serBadge},
+      {k:'ser', ab:'Series', l:b('سری','Series'), html:serBadge, fmt:serText, opts:serOpts},
       {k:'duty', l:b('کلاس کاری','Duty class'), f:1, fmt:r => L(DUTY[r.duty]) || L(r.duty), opts:() => Object.keys(DUTY).map(k => [k, L(DUTY[k])])},
       {k:'lv', l:b('سطح (۱ تا ۷)','Level (1–7)'), n:1, html:r => lvBar(r.lv)},
       {k:'d', ab:'d', l:b('قطر شافت','Spindle dia.'), u:'mm', n:1, f:1},
@@ -83,7 +92,7 @@ const DS = {
       {k:'mat', l:b('جنس لوله','Tube material'), fmt:r => L(MAT[r.mat]) || L(r.mat)},
       {k:'Ds', ab:'D', l:b('قطرهای موجود','Available diameters'), u:'mm'}
     ],
-    rowTitle: r => `${r.ser} — ${L(DUTY[r.duty])}`,
+    rowTitle: r => `${asaSer(r.ser)} — ${L(DUTY[r.duty])}`,
     detail: r => `<p class="note">${L(b('سطح کاری از ۱ (خیلی سبک) تا ۷ (فوق سنگین معدنی) است. برای انتخاب سری بر اساس بار و عمر بلبرینگ از تب «🧮 طراحی و محاسبات» استفاده کنید.','Duty level ranges from 1 (very light) to 7 (extra heavy mining). Use the "🧮 Design & calculations" tab to select a series by load and bearing life.'))}</p>`
   },
   cema: {
@@ -158,10 +167,10 @@ const DS = {
   },
   rings: {
     icon:'⭕', title:b('رینگ‌های لاستیکی استاندارد','Standard rubber rings'), src:'rm', rows:() => RINGS,
-    cols:[{k:'type', ab:'Type', l:b('طرح','Design'), f:1}, {k:'prof', l:b('پروفیل','Profile'), fmt:r => L(r.prof)}, {k:'rt', ab:'ET/ER', l:b('نوع','Type'), f:1},
+    cols:[{k:'type', ab:'Type', l:b('طرح','Design'), f:1, fmt:r => asaDes(r.type) + (asaDes(r.type) !== r.type ? ' (' + r.type + ')' : ''), html:r => eqs(asaDes(r.type), r.type)}, {k:'prof', l:b('پروفیل','Profile'), fmt:r => L(r.prof)}, {k:'rt', ab:'ET/ER', l:b('نوع','Type'), f:1},
       {k:'oe', ab:'øe', l:b('قطر خارجی','OD'), u:'mm', n:1, f:1}, {k:'ri', ab:'øi', l:b('قطر داخلی (= D لوله)','Bore (= tube D)'), u:'mm', n:1, f:1},
       {k:'w', ab:'W', l:b('عرض','Width'), u:'mm', n:1}],
-    rowTitle: r => `${r.type} øe${r.oe} / øi${r.ri} × ${r.w}`, detail: r => SV.ringProf(r.type)
+    rowTitle: r => `${asaDes(r.type)} øe${r.oe} / øi${r.ri} × ${r.w}`, detail: r => SV.ringProf(r.type)
   },
   rubberComp: {
     icon:'🧪', title:b('آمیزه‌های لاستیک','Rubber compounds'), src:'ref', rows:() => RUBBER_COMP,
@@ -176,7 +185,7 @@ const DS = {
     rowTitle: r => `CEMA BW ${r.bw}"`
   },
   dinSpacing: {
-    icon:'📐', title:b('فاصله پایه‌ها — Rulmeca / DIN (متر)','Idler pitch — Rulmeca / DIN (m)'), src:'rm',
+    icon:'📐', title:b('فاصله پایه‌ها — ASA / DIN (متر)','Idler pitch — ASA / DIN (m)'), src:'rm',
     rows:() => DIN_SPACING.map(([bw,v,ret]) => ({id:'ds|'+bw, bw, r1:v[0], r2:v[1], r3:v[2], ret, src:'rm'})),
     cols:[{k:'bw', ab:'BW', l:b('عرض نوار','Belt width'), u:'mm'}, {k:'r1', ab:'ρ < 1.2', l:b('رفت a0','Carrying a0'), u:'m', n:1},
       {k:'r2', ab:'ρ 1.2–2.0', l:b('رفت a0','Carrying a0'), u:'m', n:1}, {k:'r3', ab:'ρ > 2.0', l:b('رفت a0','Carrying a0'), u:'m', n:1}, {k:'ret', ab:'au', l:b('برگشت','Return'), u:'m', n:1}],
@@ -424,13 +433,13 @@ const CARDS = {
     {icon:'🎯', t:b('لوله دقیق (کالیبره سرد)','Precision tube (cold sized)'), s:b('دقت بالا، لنگی کم','High accuracy, low run-out'),
      body:b('لوله جوشی کالیبره سرد طبق EN 10305-3 با تلرانس قطر دقیق؛ برای رولیک‌های پرسرعت و کم‌صدا و رولیک‌های توزین.','Cold-sized welded tube per EN 10305-3 with tight OD tolerance; for high-speed, low-noise and weighing rollers.'), svg:() => SV.pipe(108,3.5,'EN 10305-3')},
     {icon:'🧪', t:b('لوله PVC سخت','Rigid PVC tube'), s:b('ضدخوردگی، سبک','Corrosion-proof, light'),
-     body:b('سری PL رولمکا: لوله PVC (RAL 7030) با هوزینگ پلیمری؛ برای محیط‌های نمکی، شیمیایی و مرطوب. محدودیت دما و ضربه دارد.','Rulmeca PL series: PVC tube (RAL 7030) with polymer housings; salty, chemical and wet environments. Temperature and impact limited.'), svg:() => SV.pipe(110,5.3,'PVC-U')},
+     body:b('سری ASA-P4: لوله PVC (RAL 7030) با هوزینگ پلیمری؛ برای محیط‌های نمکی، شیمیایی و مرطوب. محدودیت دما و ضربه دارد.','ASA-P4 series: PVC tube (RAL 7030) with polymer housings; salty, chemical and wet environments. Temperature and impact limited.'), svg:() => SV.pipe(110,5.3,'PVC-U')},
     {icon:'🧴', t:b('HDPE / UHMW-PE / نایلون','HDPE / UHMW-PE / Nylon'), s:b('سایش کم، صدای کم','Low wear, low noise'),
      body:b('HDPE (PE100) با کلاس SDR؛ UHMW-PE بیشترین مقاومت سایش و ضدچسبندگی؛ PA6 استحکام بیشتر ولی جذب رطوبت. وزن رولیک تا حدود ۵۰٪ کمتر از فولادی.','HDPE (PE100) by SDR class; UHMW-PE best abrasion and anti-stick; PA6 stronger but absorbs moisture. Roller weight up to ~50% lower than steel.'), svg:() => SV.pipe(125,11.4,'HDPE SDR11')},
     {icon:'📏', t:b('تلرانس‌ها: DIN/ISO و CEMA','Tolerances: DIN/ISO and CEMA'), s:b('قطر، ضخامت، لنگی','OD, wall, run-out'),
      body:b('مرجع عمومی (بررسی شود): EN 10219 — قطر ±1٪ (حداقل ±0.5 mm)، ضخامت ±10٪؛ EN 10305-3 دقیق‌تر. ISO 1537 و DIN 15207 تلرانس قطر و لنگی رولیک تمام‌شده را تعیین می‌کنند؛ CEMA 502 لنگی (TIR) را بر حسب کلاس رولیک می‌دهد. معیارهای پذیرش داخلی را در تب «🧪 آزمایش‌ها» تنظیم کنید.','General reference (verify): EN 10219 — OD ±1% (min ±0.5 mm), wall ±10%; EN 10305-3 tighter. ISO 1537 and DIN 15207 set finished-roller diameter and run-out tolerances; CEMA 502 gives TIR by idler class. Set in-house acceptance criteria in the "🧪 Tests" tab.')}
   ],
-  shafts: SHAFT_ENDS.map(([k,t,body]) => ({icon:'⚙️', t, s:b('برای جزئیات کلیک کنید','Click for details'), body, svg:() => SV.shaftEnd(k)})).concat([
+  shafts: SHAFT_ENDS.map(([k,t,body]) => ({icon:'⚙️', t, s:b('برای جزئیات کلیک کنید','Click for details'), body, ph:'shaft-'+k, svg:() => SV.shaftEnd(k)})).concat([
     {icon:'📏', t:b('تلرانس شافت','Shaft tolerances'), s:b('h9 بدنه ، k6/j6 محل بلبرینگ','h9 body, k6/j6 bearing seat'),
      body:b('مرجع عمومی: شافت کشیده سرد C45 با تلرانس h9؛ در محل بلبرینگ برای انطباق جذبی سبک k6 یا j6 (یا h7 با چسب نگهدارنده). صافی سطح نشیمن Ra ≤ 1.6 µm. تلرانس تخت‌ها: ch در h11 یا d11. با نقشه و توصیه سازنده بلبرینگ تطبیق دهید.','General reference: cold-drawn C45 to h9; at bearing seat k6 or j6 for light interference (or h7 with retaining compound). Seat finish Ra ≤ 1.6 µm. Flats ch to h11/d11. Match with drawing and bearing maker.')}
   ]),
@@ -453,16 +462,16 @@ const CARDS = {
      body:b('n = دور رولیک = v·60000/(π·D) ؛ P = بار هر بلبرینگ (نصف بار رولیک). عمر پیشنهادی رولیک ۳۰٬۰۰۰ تا ۵۰٬۰۰۰ ساعت. محاسبه خودکار در تب «🧮 طراحی».','n = roller rpm = v·60000/(π·D); P = load per bearing (half the roller load). Recommended life 30,000–50,000 h. Calculated automatically in "🧮 Design".')}
   ],
   rubber: [
-    ['NA', b('رینگ ضربه‌گیر (NA)','Impact rings (NA)'), b('رینگ‌های تخت (ET) پشت‌سرهم روی لوله در محل بارگیری؛ جذب انرژی ضربه و حفاظت نوار. سختی معمول NR 60 ± 5 Shore A.','Flat rings (ET) side by side under the loading point; absorb impact and protect the belt. Typically NR 60 ± 5 Shore A.')],
-    ['NG', b('برگشت با رینگ نوک‌تیز (NG)','Return, pointed rings (NG)'), b('رینگ‌های خم/نوک‌تیز (ER) با فاصله؛ تماس کم با سطح کثیف نوار و جلوگیری از چسبیدن مواد.','Curved/pointed rings (ER) spaced apart; small contact with dirty belt side, prevents build-up.')],
-    ['NL', b('برگشت NL (تخت کناری + خم میانی)','Return NL (flat sides + curved centre)'), b('دسته رینگ تخت (ET) در دو لبه نوار برای تکیه‌گاه و هدایت، رینگ‌های خم (ER) در وسط. چینش: side | central | side.','Flat ring sets (ET) at belt edges for support/tracking, curved rings (ER) in the centre. Layout: side | central | side.')],
-    ['NC', b('برگشت V با رینگ (NC)','V-return with rings (NC)'), b('برای پایه‌های برگشت V؛ دسته تخت در سمت بیرونی و رینگ‌های خم میانی.','For V-return sets; flat set on the outer side, curved rings inward.')],
-    ['NM', b('مارپیچ لاستیکی خودتمیزکن (NM)','Self-cleaning rubber helix (NM)'), b('نوار لاستیکی مارپیچ روی لوله؛ مواد چسبنده را از سطح برگشت نوار جدا و به کناره هدایت می‌کند.','Helical rubber strip on the tube; sheds sticky material from the return belt to the sides.')],
+    ['NA', b('رینگ ضربه‌گیر IR (NA)','Impact rings IR (NA)'), b('رینگ‌های تخت (ET) پشت‌سرهم روی لوله در محل بارگیری؛ جذب انرژی ضربه و حفاظت نوار. سختی معمول NR 60 ± 5 Shore A.','Flat rings (ET) side by side under the loading point; absorb impact and protect the belt. Typically NR 60 ± 5 Shore A.')],
+    ['NG', b('برگشت با رینگ نوک‌تیز RP (NG)','Return, pointed rings RP (NG)'), b('رینگ‌های خم/نوک‌تیز (ER) با فاصله؛ تماس کم با سطح کثیف نوار و جلوگیری از چسبیدن مواد.','Curved/pointed rings (ER) spaced apart; small contact with dirty belt side, prevents build-up.')],
+    ['NL', b('برگشت RF (NL): تخت کناری + خم میانی','Return RF (NL): flat sides + curved centre'), b('دسته رینگ تخت (ET) در دو لبه نوار برای تکیه‌گاه و هدایت، رینگ‌های خم (ER) در وسط. چینش: side | central | side.','Flat ring sets (ET) at belt edges for support/tracking, curved rings (ER) in the centre. Layout: side | central | side.')],
+    ['NC', b('برگشت V با رینگ RV (NC)','V-return with rings RV (NC)'), b('برای پایه‌های برگشت V؛ دسته تخت در سمت بیرونی و رینگ‌های خم میانی.','For V-return sets; flat set on the outer side, curved rings inward.')],
+    ['NM', b('مارپیچ لاستیکی خودتمیزکن HX (NM)','Self-cleaning rubber helix HX (NM)'), b('نوار لاستیکی مارپیچ روی لوله؛ مواد چسبنده را از سطح برگشت نوار جدا و به کناره هدایت می‌کند.','Helical rubber strip on the tube; sheds sticky material from the return belt to the sides.')],
     ['disc', b('دیسک لاستیکی','Rubber discs'), b('دیسک‌های باریک با فاصله زیاد؛ اقتصادی برای برگشت با مواد کم‌چسبنده.','Narrow discs widely spaced; economical return rollers for low-adhesion materials.')],
     ['lag', b('روکش لاستیکی (Lagging)','Rubber lagging'), b('پوشش یکپارچه لاستیک روی لوله (وولکانیزه/چسبی)؛ کاهش صدا و سایش، رولیک‌های توزین و ویژه.','Continuous vulcanised/bonded rubber cover; reduces noise and wear; weighing and special rollers.')],
     ['pu', b('رینگ پلی‌اورتان','Polyurethane rings'), b('سختی 80 تا 95 Shore A؛ بیشترین مقاومت سایش و برش برای مواد تیز؛ حساس به رطوبت گرم (هیدرولیز).','80–95 Shore A; best abrasion and cut resistance for sharp materials; sensitive to hot moisture (hydrolysis).')]
-  ].map(([k,t,body]) => ({icon:'⭕', t, s:b('برای جزئیات و تصویر کلیک کنید','Click for details & drawing'), body, svg:() => SV.ringProf(k)})),
-  frames: FRAMES.map(f => ({icon:'🏗', t:f.name, s:{fa:'زاویه‌ها: '+f.ang.join('°، ')+'°', en:'Angles: '+f.ang.join('°, ')+'°'}, body:f.desc, frame:f}))
+  ].map(([k,t,body]) => ({icon:'⭕', t, s:b('برای جزئیات و تصویر کلیک کنید','Click for details & drawing'), body, ph:'rubber-'+k, svg:() => SV.ringProf(k)})),
+  frames: FRAMES.map(f => ({icon:'🏗', t:f.name, s:{fa:'زاویه‌ها: '+f.ang.join('°، ')+'°', en:'Angles: '+f.ang.join('°, ')+'°'}, body:f.desc, frame:f, ph:'frame-'+f.k}))
 };
 function renderCards(k, el){
   const list = CARDS[k];
@@ -471,10 +480,11 @@ function renderCards(k, el){
 window.showCard = (k, i, ang) => {
   const c = CARDS[k][i];
   let svg = c.svg ? c.svg() : '', extra = '';
+  const ph = photoHtml(c.ph || (k + '-' + i));
   if (c.frame){ const a = ang != null ? ang : c.frame.ang[Math.min(1, c.frame.ang.length-1)];
     svg = SV.frame(c.frame.k, a);
     extra = c.frame.ang.length > 1 ? `<div class="seg sm">${c.frame.ang.map(x => `<button class="${x===a?'on':''}" onclick="showCard('${k}',${i},${x})">λ ${x}°</button>`).join('')}</div>` : ''; }
-  openModal(c.icon + ' ' + L(c.t), extra + svg + `<p class="body">${esc(L(c.body))}</p>`,
+  openModal(c.icon + ' ' + L(c.t), ph + extra + svg + `<p class="body">${esc(L(c.body))}</p>`,
     `<button class="btn" onclick="printHtml(document.querySelector('#modal_t').textContent, document.querySelector('#modal_b').innerHTML)">🖨 ${esc(L(I18N.print))}</button>`);
 };
 
@@ -575,7 +585,7 @@ window.useMaterial = id => {
 
 CALC.load = el => {
   const V = CS.load || (CS.load = {Q:800, v:2.5, bw:1000, arr:'t3', lam:35, a0:1.2, au:3, qb:13, D:133, lump:1, fs:2, fm:1, life:30000, rarr:'flat'});
-  el.innerHTML = `<div class="card"><div class="ch"><span>⚖️ ${esc(L(b('بار روی رولیک، عمر بلبرینگ و انتخاب سری','Idler load, bearing life & series selection')))}</span><small>Rulmeca · DIN 22101 · CEMA 502</small></div>
+  el.innerHTML = `<div class="card"><div class="ch"><span>⚖️ ${esc(L(b('بار روی رولیک، عمر بلبرینگ و انتخاب سری','Idler load, bearing life & series selection')))}</span><small>ASA · DIN 22101 · CEMA 502</small></div>
     <div class="calc"><div class="form">
     ${fld(L(b('ظرفیت Qm','Capacity Qm')), ninp('l_Q', V.Q), 't/h')}
     ${fld(L(b('سرعت v','Speed v')), ninp('l_v', V.v), 'm/s')}
@@ -638,7 +648,7 @@ window.suggestPitch = () => {
 
 CALC.factors = el => {
   const t2 = (head, rows) => `<table class="mini wide"><tr>${head.map(x => `<th>${esc(x)}</th>`).join('')}</tr>${rows.map(r => `<tr>${r.map(x => `<td>${esc(x)}</td>`).join('')}</tr>`).join('')}</table>`;
-  el.innerHTML = `<div class="card"><div class="ch"><span>📋 ${esc(L(b('ضرایب محاسبه بار رولیک (Rulmeca)','Idler load factors (Rulmeca)')))}</span><small>${esc(L(SRC.ref))}</small></div><div class="pad">
+  el.innerHTML = `<div class="card"><div class="ch"><span>📋 ${esc(L(b('ضرایب محاسبه بار رولیک (روش ASA)','Idler load factors (ASA method)')))}</span><small>${esc(L(SRC.ref))}</small></div><div class="pad">
     <h4>Fp — ${esc(L(b('ضریب مشارکت','Participation factor')))}</h4>${t2([L(b('چیدمان','Arrangement')),'Fp'], [[L(ARR.flat),'1.00'],[L(ARR.v2),'0.50']].concat([20,25,30,35,40,45].map(a => [L(ARR.t3)+' '+a+'°', FP['t'+a]])))}
     <h4>Fd — ${esc(L(b('ضریب ضربه','Impact factor')))}</h4>${t2([L(b('اندازه کلوخه','Lump size'))].concat(FD_SPEEDS.map(s => s+' m/s')), FD.map(([n2,v]) => [L(n2)].concat(v)))}
     <h4>Fs — ${esc(L(b('ضریب سرویس','Service factor')))}</h4>${t2([L(b('ساعت کار','Operating hours')),'Fs'], FS.map(([n2,v]) => [L(n2), v]))}
@@ -680,7 +690,7 @@ window.dsXlsx = k => {
   const ws = XLSX.utils.aoa_to_sheet(aoa); ws['!cols'] = cols.map(c => ({wch: c.n ? 10 : 24}));
   const wb = XLSX.utils.book_new(); wb.Workbook = {Views:[{RTL: APP.lang === 'fa'}]};
   XLSX.utils.book_append_sheet(wb, ws, (L(D.title).replace(/[\\\/\?\*\[\]:]/g,' ')).slice(0,31));
-  XLSX.writeFile(wb, `Asaroul_${k}_${new Date().toISOString().slice(0,10)}.xlsx`);
+  XLSX.writeFile(wb, `Asaroll_${k}_${new Date().toISOString().slice(0,10)}.xlsx`);
 };
 window.printTestForm = id => {
   const r = findRow('tests', id); if (!r) return;
@@ -745,7 +755,7 @@ window.exportPkg = () => {
   const pkg = {app:'asaroul-roller-standards', v:1, date:new Date().toISOString(), data:{}};
   Object.keys(DS).forEach(k => { const s = LS.get('rs_ds_'+k, null); if (s) pkg.data[k] = s; });
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(pkg, null, 1)], {type:'application/json'}));
-  a.download = `Asaroul_Roller_Standards_changes_${new Date().toISOString().slice(0,10)}.json`; a.click();
+  a.download = `Asaroll_Roller_Standards_changes_${new Date().toISOString().slice(0,10)}.json`; a.click();
 };
 window.importPkg = ev => {
   const f = ev.target.files[0]; if (!f || !need()) return;
@@ -778,4 +788,16 @@ let tT = null;
 function toast(m){ const el = $('toast'); el.textContent = m; el.classList.remove('hidden'); clearTimeout(tT); tT = setTimeout(() => el.classList.add('hidden'), 2800); }
 window.toggleLang = () => { APP.lang = APP.lang === 'fa' ? 'en' : 'fa'; LS.set('rs_lang', APP.lang); renderAll(); const q = $('gq'); if (q.value) gSearch(q.value); };
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-document.addEventListener('DOMContentLoaded', () => { $('logo').src = LOGO; renderAll(); });
+document.addEventListener('DOMContentLoaded', () => { $('logo').src = LOGO; renderAll();
+  const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  if ((location.protocol === 'https:' || location.hostname === 'localhost') && !standalone) $('install_btn').classList.remove('hidden'); });
+/* نسخه نصبی (PWA): فقط وقتی از روی وب (https) باز شود */
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+let installEvt = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; const bt = $('install_btn'); if (bt) bt.classList.remove('hidden'); });
+window.installApp = () => {
+  if (installEvt){ installEvt.prompt(); installEvt = null; $('install_btn').classList.add('hidden'); return; }
+  openModal('📲 ' + L(b('نصب برنامه','Install the app')), `<div class="body">${L(b(
+    '<b>اندروید (کروم):</b> منوی ⋮ ← «نصب برنامه» یا «افزودن به صفحه اصلی».<br><b>آیفون / آیپد (Safari):</b> دکمه اشتراک‌گذاری ⬆️ ← «Add to Home Screen».<br><b>ویندوز (Edge / Chrome):</b> آیکون نصب ⊕ در نوار آدرس یا منو ← «Apps» ← «Install this site as an app».<br><b>مک:</b> Chrome ← نصب، یا Safari ← File ← Add to Dock.<br>پس از نصب، برنامه با آیکون آسارول و بدون اینترنت اجرا می‌شود.',
+    '<b>Android (Chrome):</b> menu ⋮ → "Install app" or "Add to Home screen".<br><b>iPhone / iPad (Safari):</b> Share ⬆️ → "Add to Home Screen".<br><b>Windows (Edge / Chrome):</b> install icon ⊕ in the address bar, or menu → Apps → "Install this site as an app".<br><b>Mac:</b> Chrome → Install, or Safari → File → Add to Dock.<br>Once installed the app runs offline with the Asaroll icon.'))}</div>`);
+};

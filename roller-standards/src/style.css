@@ -93,3 +93,18 @@ hr{border:none;border-top:1px solid var(--bd);margin:12px 0}
 #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--p);color:#fff;padding:10px 22px;border-radius:10px;z-index:200;box-shadow:0 6px 24px rgba(0,0,0,.3)}
 footer{text-align:center;color:var(--tx2);font-size:.75rem;padding:10px 20px 24px}
 @media print{header,nav,.bar,.chips,.filters,footer{display:none}}
+.eq{font-size:.68em;color:var(--tx2);font-weight:500;opacity:.85;white-space:nowrap}
+.phs{display:flex;gap:8px;overflow-x:auto;margin-bottom:10px}.phs img{height:170px;border-radius:8px;border:1px solid var(--bd);cursor:zoom-in;object-fit:cover}.phs img.big{height:auto;max-width:100%;cursor:zoom-out}
+.badge{white-space:nowrap}
+@media(max-width:760px){
+  .hi{padding:8px 12px;gap:8px}.logo{width:36px;height:36px}.brand b{font-size:.95rem}.brand small{display:none}
+  .gs{order:9;flex-basis:100%;max-width:none;margin:0}.gs input{padding:7px 12px}.hb{padding:5px 10px;font-size:.8rem}
+  .brand{flex:1}nav{padding:0 8px}.tab{padding:7px 10px;font-size:.82rem}
+  main{padding:10px 8px 30px}.seg{flex-wrap:nowrap;overflow-x:auto}.seg button{white-space:nowrap;padding:5px 12px}
+  .chips{flex-wrap:nowrap;overflow-x:auto;padding-bottom:6px}.chip{white-space:nowrap}
+  .bar{padding:8px 10px 4px}.q{min-width:100%}.filters{flex-wrap:nowrap;overflow-x:auto}
+  .calc{padding:10px}.calc .form{grid-template-columns:1fr 1fr}.kpi b{font-size:1.1rem}
+  .mb{max-height:96vh}#modal{padding:6px}#modal_b,.mh,.mf{padding-left:12px;padding-right:12px}
+}
+.calc>*{min-width:0}.form label{min-width:0}.form input,.form select{width:100%;min-width:0}.kpi{grid-template-columns:repeat(3,minmax(0,1fr))}.kpi b{overflow:hidden;text-overflow:ellipsis}
+.out{overflow-x:auto}

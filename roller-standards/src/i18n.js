@@ -1,8 +1,8 @@
 /* متن‌های رابط کاربری — دو زبانه */
 const I18N = {
-  app: b('رولیک و استانداردها — آسارول', 'Rollers & Standards — Asaroul'),
+  app: b('رولیک و استانداردها — آسارول', 'Rollers & Standards — Asaroll'),
   subtitle: b('مرجع مهندسی رولیک، لوله، شافت، لاستیک، پایه و آزمایش‌ها · DIN / ISO / CEMA', 'Engineering reference for rollers, tubes, shafts, rubber, frames and tests · DIN / ISO / CEMA'),
-  gsearch_ph: b('🔍 جستجو در همه بخش‌ها… (مثلاً PSV2 133 یا 6205 یا NL)', '🔍 Search everything… (e.g. PSV2 133, 6205, NL)'),
+  gsearch_ph: b('🔍 جستجو در همه بخش‌ها… (مثلاً ASA-2 133 یا 6205 یا RF)', '🔍 Search everything… (e.g. ASA-2 133, 6205, RF)'),
   search_ph: b('🔍 جستجوی سریع در این جدول', '🔍 Quick search in this table'),
   locked_on: b('قفل', 'Locked'), locked_off: b('باز', 'Unlocked'),
   add: b('افزودن', 'Add'), reset: b('بازگردانی پیش‌فرض', 'Restore defaults'), all: b('همه', 'All'), clear: b('حذف فیلترها', 'Clear filters'),
@@ -22,5 +22,5 @@ const I18N = {
   change_pw: b('تغییر رمز (روی همین کامپیوتر)', 'Change password (this computer)'),
   pkg_d: b('تغییرات اطلاعات روی همین کامپیوتر ذخیره می‌شود. برای انتقال به کامپیوترهای دیگر، «خروجی تغییرات» بگیرید و در آن‌ها «ورود تغییرات» کنید.', 'Data changes are stored on this computer. To share them, export changes here and import them on other computers.'),
   export_pkg: b('خروجی تغییرات', 'Export changes'), import_pkg: b('ورود تغییرات', 'Import changes'), reset_all: b('حذف همه تغییرات', 'Discard all changes'),
-  lock_now: b('قفل کردن', 'Lock now'), footer: b('آسارول — نرم‌افزار مرجع مهندسی، بدون اطلاعات قیمت. مقادیر «مرجع عمومی» را با استاندارد و کاتالوگ تطبیق دهید.', 'Asaroul — engineering reference software, no pricing data. Verify "general reference" values against the standards and catalogues.')
+  lock_now: b('قفل کردن', 'Lock now'), footer: b('آسارول — نرم‌افزار مرجع مهندسی، بدون اطلاعات قیمت. مقادیر «مرجع عمومی» را با استاندارد و کاتالوگ تطبیق دهید.', 'Asaroll — engineering reference software, no pricing data. Verify "general reference" values against the standards and catalogues.')
 };
