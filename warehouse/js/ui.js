@@ -74,7 +74,7 @@ const UI = (() => {
   function enter() {
     document.body.classList.remove('locked'); $('login').classList.add('hidden'); $('app').classList.remove('hidden');
     go((location.hash || '#dash').slice(1));
-    if (!DB.items.length && Auth.can('items')) setTimeout(() => Help.welcome(), 400);
+    if (!DB.items.length && Auth.can('items')) setTimeout(() => { if ($('modal').classList.contains('hidden')) Help.welcome(); }, 400);
   }
   /* جدول با جستجو، مرتب‌سازی و خروجی اکسل */
   function table(el, cols, rows, opt) {

@@ -4,6 +4,11 @@
 
 آدرس پس از انتشار روی GitHub Pages: `https://<user>.github.io/calculator-roller/warehouse/`
 
+## نسخه دانلودی برای Microsoft Edge
+فایل تک‌فایلی `Asaroul-Warehouse.html` (حدود ۱ مگابایت) همه کد، ظاهر، کتابخانه اکسل و آیکون را در خود دارد و بدون اینترنت با دوبار کلیک در Edge یا Chrome باز می‌شود. پس از هر تغییر در سورس، دوباره بسازید:
+
+    python3 build.py
+
 ## امکانات
 | بخش | توضیح |
 |---|---|

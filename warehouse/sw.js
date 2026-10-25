@@ -1,7 +1,7 @@
 // Service Worker — اجرای آفلاین سامانه انبار آسارول
 // فایل‌های برنامه: اول شبکه (برای دریافت نسخه جدید)، در نبود اینترنت از حافظه
 // کتابخانه‌ها و فونت‌ها: اول حافظه، سپس شبکه
-const CACHE = 'asaroul-wh-v1';
+const CACHE = 'asaroul-wh-v2';
 const JS = ['sha256', 'core', 'auth', 'domain', 'ui', 'docs', 'master', 'reports', 'admin', 'sync', 'importer', 'help', 'app'].map(f => 'js/' + f + '.js');
 const CORE = ['./', 'index.html', 'style.css', 'manifest.json', 'icon-192.png', 'icon-512.png', ...JS,
   'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'];
