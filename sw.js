@@ -1,7 +1,7 @@
 // Service Worker — اجرای آفلاین محاسبه‌گر آسارول
 // صفحه‌ها: اول شبکه (برای دریافت نسخه جدید)، در نبود اینترنت از حافظه
 // کتابخانه‌ها و فونت‌ها: اول حافظه، سپس شبکه
-const CACHE = 'asaroul-v1';
+const CACHE = 'asaroul-v11.11';
 const CORE = ['./', 'index.html', 'asaroul_calculator.html', 'manifest.json', 'icon-192.png', 'icon-512.png',
   'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'];
 
