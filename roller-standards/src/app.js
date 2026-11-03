@@ -3,11 +3,41 @@
    نرم‌افزار مستقل مرجع مهندسی (بدون قیمت‌گذاری) — کاملاً آفلاین
 ═══════════════════════════════════════════════════════════════ */
 'use strict';
+/* ذخیره‌سازی: حافظه + IndexedDB (جا زیاد، جدا از حافظه کوچک مشترک فایل‌های محلی)
+   localStorage فقط برای انتقال داده‌های قدیمی و پشتیبان استفاده می‌شود. */
+const MEM = {};
+let IDB = null, lsWarned = false;
+const lsWarn = () => { if (lsWarned) return; lsWarned = true;
+  toast(L(b('ذخیره دائمی در این مرورگر ممکن نشد؛ تغییرات تا بستن صفحه حفظ می‌شوند. برای ذخیره دائمی از نسخه نصبی یا Chrome / Edge استفاده کنید.','Permanent storage is not available in this browser; changes last until the page is closed. Use the installed app or Chrome / Edge.'))); };
 const LS = {
-  get(k, d){ try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch(e){ return d; } },
-  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch(e){ toast(L(b('ذخیره در حافظه مرورگر ممکن نشد','Could not save to browser storage'))); return false; } }
+  get(k, d){ return k in MEM ? JSON.parse(JSON.stringify(MEM[k])) : d; },
+  set(k, v){ MEM[k] = JSON.parse(JSON.stringify(v));
+    if (IDB){ try { const tx = IDB.transaction('kv', 'readwrite'); tx.objectStore('kv').put(MEM[k], k); tx.onerror = () => lsWarn(); } catch(e){ lsWarn(); } }
+    else { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){ lsWarn(); } }
+    return true; },
+  del(k){ delete MEM[k]; try { localStorage.removeItem(k); } catch(e){} if (IDB){ try { IDB.transaction('kv', 'readwrite').objectStore('kv').delete(k); } catch(e){} } }
 };
-const APP = { lang: LS.get('rs_lang','fa'), unlocked: false, tab: LS.get('rs_tab','rollers'), sec: LS.get('rs_sec',{}) };
+function storeInit(){
+  /* داده‌های قدیمی (localStorage) به حافظه منتقل شوند */
+  try { for (let i = 0; i < localStorage.length; i++){ const k = localStorage.key(i); if (/^rs_/.test(k)) { try { MEM[k] = JSON.parse(localStorage.getItem(k)); } catch(e){} } } } catch(e){}
+  return new Promise(res => {
+    let done = false; const fin = () => { if (!done){ done = true; res(); } }; setTimeout(fin, 1500);
+    try {
+      const rq = indexedDB.open('asaroll_rs', 1);
+      rq.onupgradeneeded = () => rq.result.createObjectStore('kv');
+      rq.onerror = () => fin();
+      rq.onsuccess = () => { IDB = rq.result;
+        const tx = IDB.transaction('kv', 'readonly'), st = tx.objectStore('kv'), kr = st.getAllKeys(), vr = st.getAll();
+        tx.oncomplete = () => { const ks = kr.result || [], vs = vr.result || [], have = new Set(ks);
+          ks.forEach((k, i) => { MEM[k] = vs[i]; });
+          /* انتقال کلیدهای قدیمی به IndexedDB و آزاد کردن حافظه مشترک */
+          Object.keys(MEM).forEach(k => { if (!have.has(k)) { try { IDB.transaction('kv', 'readwrite').objectStore('kv').put(MEM[k], k); } catch(e){} } try { localStorage.removeItem(k); } catch(e){} });
+          fin(); };
+        tx.onerror = () => fin(); };
+    } catch(e){ fin(); }
+  });
+}
+const APP = { lang: 'fa', unlocked: false, tab: 'rollers', sec: {} };
 try { APP.unlocked = sessionStorage.getItem('rs_unlock') === '1'; } catch(e){}
 const L = v => v == null ? '' : (typeof v === 'object' && !Array.isArray(v) && 'fa' in v) ? v[APP.lang] : v;
 const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -416,7 +446,7 @@ window.dsDel = (k, id) => {
 };
 window.dsReset = k => {
   if (!need() || !confirm(L(I18N.confirm_reset))) return;
-  localStorage.removeItem('rs_ds_'+k); delete ROWS[k]; renderTab();
+  LS.del('rs_ds_'+k); delete ROWS[k]; renderTab();
 };
 
 /* ─────────────── کارت‌های دانش ─────────────── */
@@ -527,7 +557,7 @@ const fld = (lab, html, u) => `<label>${lab}${u?` <small>(${u})</small>`:''}${ht
 const ninp = (id, v, step) => `<input id="${id}" type="number" step="${step||'any'}" value="${v}" oninput="calcRun()">`;
 let calcRun = () => {};
 window.calcRun = () => calcRun();
-const CS = LS.get('rs_calc', {capMode:'din'});
+const CS = {capMode:'din'};
 const saveCS = () => LS.set('rs_calc', CS);
 const matOpts = () => [['', '— ' + L(b('انتخاب ماده','pick material')) + ' —']].concat(rowsOf('materials').map(m => [m.id, L(m.name)]));
 
@@ -768,7 +798,7 @@ window.importPkg = ev => {
     Object.entries(p.data||{}).forEach(([k,v]) => { if (DS[k]) { LS.set('rs_ds_'+k, v); delete ROWS[k]; } }); closeModal(); renderAll(); toast('✅ ' + L(I18N.saved)); }
     catch(e){ toast('⛔ ' + L(b('فایل نامعتبر است','Invalid file'))); } }; rd.readAsText(f);
 };
-window.resetAll = () => { if (!need() || !confirm(L(I18N.confirm_reset_all))) return; Object.keys(DS).forEach(k => { localStorage.removeItem('rs_ds_'+k); delete ROWS[k]; }); closeModal(); renderAll(); };
+window.resetAll = () => { if (!need() || !confirm(L(I18N.confirm_reset_all))) return; Object.keys(DS).forEach(k => { LS.del('rs_ds_'+k); delete ROWS[k]; }); closeModal(); renderAll(); };
 
 
 /* ─────────────── اطلاعات سازنده (غیرقابل تغییر از داخل نرم‌افزار) ─────────────── */
@@ -793,7 +823,11 @@ let tT = null;
 function toast(m){ const el = $('toast'); el.textContent = m; el.classList.remove('hidden'); clearTimeout(tT); tT = setTimeout(() => el.classList.add('hidden'), 2800); }
 window.toggleLang = () => { APP.lang = APP.lang === 'fa' ? 'en' : 'fa'; LS.set('rs_lang', APP.lang); renderAll(); const q = $('gq'); if (q.value) gSearch(q.value); };
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-document.addEventListener('DOMContentLoaded', () => { $('logo').src = LOGO; renderAll();
+document.addEventListener('DOMContentLoaded', async () => { $('logo').src = LOGO;
+  await storeInit();
+  Object.assign(APP, {lang: LS.get('rs_lang','fa'), tab: LS.get('rs_tab','rollers'), sec: LS.get('rs_sec',{})});
+  Object.assign(CS, LS.get('rs_calc', {capMode:'din'}));
+  renderAll();
   const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
   if ((location.protocol === 'https:' || location.hostname === 'localhost') && !standalone) $('install_btn').classList.remove('hidden'); });
 /* نسخه نصبی (PWA): فقط وقتی از روی وب (https) باز شود */
