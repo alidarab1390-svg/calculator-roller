@@ -267,6 +267,7 @@ const TABS = [
     {k:'din', t:b('فاصله پایه‌ها DIN','Pitch DIN'), ds:'dinSpacing'},
     {k:'cema', t:b('فاصله پایه‌ها CEMA','Spacing CEMA'), ds:'cemaSpacing'}]},
   {k:'design', icon:'🧮', t:b('طراحی و محاسبات','Design & calculations'), secs:[
+    {k:'wiz', t:b('طراحی کامل نوار نقاله','Complete conveyor design'), calc:'wiz'},
     {k:'cap', t:b('ظرفیت و عرض نوار','Capacity & belt width'), calc:'cap'},
     {k:'load', t:b('بار رولیک و انتخاب سری','Idler load & series selection'), calc:'load'},
     {k:'mat', t:b('مواد فله','Bulk materials'), ds:'materials'},
@@ -276,6 +277,7 @@ const TABS = [
   {k:'gloss', icon:'🔤', t:b('علائم','Symbols'), secs:[{k:'all', t:b('راهنمای علائم','Symbols'), ds:'glossary'}]}
 ];
 
+const APP_VERSION = '%%VERSION%%';
 function renderAll(){
   document.documentElement.lang = APP.lang; document.documentElement.dir = APP.lang === 'fa' ? 'rtl' : 'ltr';
   document.body.classList.toggle('unlocked', APP.unlocked);
@@ -284,6 +286,7 @@ function renderAll(){
   $('lang_btn').textContent = APP.lang === 'fa' ? 'EN' : 'فا';
   $('lock_btn').innerHTML = APP.unlocked ? '🔓 ' + L(I18N.locked_off) : '🔒 ' + L(I18N.locked_on);
   document.title = L(I18N.app);
+  const sub = document.querySelector('.brand small'); if (sub) sub.textContent = L(I18N.subtitle) + ' · V' + APP_VERSION;
   $('tabs').innerHTML = TABS.map(T => `<button class="tab ${APP.tab===T.k?'on':''}" onclick="go('${T.k}')">${T.icon} ${esc(L(T.t))}</button>`).join('');
   renderTab(); placeCredit();
 }
@@ -630,10 +633,10 @@ CALC.load = el => {
       return {k, S, C, Lc, Lr, th, ok};
     });
     h += `<h4>${esc(L(b('بررسی سری‌ها برای D = ','Series check for D = ')))}${V.D} mm</h4>` + (rows.length ? `<table class="mini"><tr><th>${esc(L(b('سری','Series')))}</th><th>d</th><th>Brg</th><th>C kN</th><th>L10h ${esc(L(b('رفت','carry')))}</th><th>L10h ${esc(L(b('برگشت','return')))}</th><th>θ rad</th><th></th></tr>` +
-      rows.map(x => `<tr class="${x.ok?'ok':'bad'}"><td>${x.k}</td><td>${x.S.d}</td><td>${x.S.brg}</td><td>${x.C}</td><td>${x.Lc>1e7?'>10⁷':fx(x.Lc,0)}</td><td>${x.Lr>1e7?'>10⁷':fx(x.Lr,0)}</td><td>${isNaN(x.th)?'—':x.th.toFixed(4)}</td><td>${x.ok?'✅':'✗'}</td></tr>`).join('') + '</table>'
+      rows.map(x => `<tr class="${x.ok?'ok':'bad'}"><td>${eqs(asaSer(x.k), x.k)}</td><td>${x.S.d}</td><td>${x.S.brg}</td><td>${x.C}</td><td>${x.Lc>1e7?'>10⁷':fx(x.Lc,0)}</td><td>${x.Lr>1e7?'>10⁷':fx(x.Lr,0)}</td><td>${isNaN(x.th)?'—':x.th.toFixed(4)}</td><td>${x.ok?'✅':'✗'}</td></tr>`).join('') + '</table>'
       : `<p class="warn">${esc(L(b('هیچ سری فولادی با این قطر در جدول نیست.','No steel series with this diameter in the table.')))}</p>`);
     const best = rows.find(x => x.ok);
-    h += `<p class="res">${best ? '✅ '+esc(L(b('سبک‌ترین سری مناسب: ','Lightest suitable series: ')))+`<b>${best.k}</b> (${esc(L(DUTY[best.S.duty]))})` : '⚠️ '+esc(L(b('هیچ سری با این قطر کافی نیست؛ قطر یا فاصله پایه را تغییر دهید.','No series is sufficient at this diameter; change diameter or pitch.')))}</p>`;
+    h += `<p class="res">${best ? '✅ '+esc(L(b('سبک‌ترین سری مناسب: ','Lightest suitable series: ')))+`<b>${eqs(asaSer(best.k), best.k)}</b> (${esc(L(DUTY[best.S.duty]))})` : '⚠️ '+esc(L(b('هیچ سری با این قطر کافی نیست؛ قطر یا فاصله پایه را تغییر دهید.','No series is sufficient at this diameter; change diameter or pitch.')))}</p>`;
     const lbfC = Ca1*10/4.448, lbfR = Cr*Fs*Fm*10/4.448;
     const cm = rowsOf('cema').find(c => c.trough >= lbfC && c.ret >= lbfR);
     h += `<p class="res">🇺🇸 CEMA: ${esc(L(b('بار هر پایه رفت','carrying set load')))} ${fx(lbfC,0)} lbf ، ${esc(L(b('برگشت','return')))} ${fx(lbfR,0)} lbf → ${cm ? `<b>CEMA ${cm.cls}</b>` : esc(L(b('بیش از کلاس F','above class F')))}</p>`;

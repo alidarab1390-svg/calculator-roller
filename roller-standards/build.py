@@ -12,7 +12,7 @@ rd = lambda p: open(p, encoding='utf-8').read()
 xlsx = rd(os.path.join(src, 'vendor', 'xlsx.full.min.js')).replace('</script', '<\\/script')
 font64 = base64.b64encode(open(os.path.join(src, 'vendor', 'Vazirmatn-wght.woff2'), 'rb').read()).decode()
 pw = sys.argv[1] if len(sys.argv) > 1 else 'asaroul'
-VERSION = '1.1'
+VERSION = '4.0'
 font_css = "@font-face{font-family:Vazirmatn;src:url(data:font/woff2;base64,%s) format('woff2');font-weight:100 900;font-display:swap}" % font64
 mime = {'.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp'}
 photos = {}
@@ -21,8 +21,8 @@ for f in sorted(os.listdir(pdir)) if os.path.isdir(pdir) else []:
     k, ext = os.path.splitext(f)
     if ext.lower() in mime:
         photos[k] = 'data:%s;base64,%s' % (mime[ext.lower()], base64.b64encode(open(os.path.join(pdir, f), 'rb').read()).decode())
-js = '\n'.join(rd(os.path.join(src, f)) for f in ['sha256.js', 'data_rollers.js', 'data_other.js', 'i18n.js', 'svg.js', 'app.js'])
-js = js.replace('%%PW_HASH%%', hashlib.sha256(pw.encode()).hexdigest())
+js = '\n'.join(rd(os.path.join(src, f)) for f in ['sha256.js', 'data_rollers.js', 'data_other.js', 'data_conveyor.js', 'i18n.js', 'svg.js', 'app.js', 'conveyor.js', 'conveyor_ui.js'])
+js = js.replace('%%PW_HASH%%', hashlib.sha256(pw.encode()).hexdigest()).replace('%%VERSION%%', VERSION)
 
 def page(head):
     html = rd(os.path.join(src, 'template.html'))
@@ -34,7 +34,9 @@ def page(head):
     return html
 
 single = os.path.join(here, 'Roller-Standards.html')
+versioned = os.path.join(here, 'Roller-Standards_V%s.html' % VERSION.split('.')[0])
 open(single, 'w', encoding='utf-8').write(page('<link rel="icon" href="' + rd(os.path.join(src, 'logo.b64')).strip() + '">'))
+shutil.copy(single, versioned)
 print(single, round(os.path.getsize(single) / 1024), 'KB,', len(photos), 'photos')
 
 app = os.path.join(here, 'app'); os.makedirs(app, exist_ok=True)
