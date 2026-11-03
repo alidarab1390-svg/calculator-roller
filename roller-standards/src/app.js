@@ -68,7 +68,9 @@ const DS = {
       {k:'f', ab:'f', l:b('f','f'), u:'mm', n:1}, {k:'m', ab:'m', l:b('m','m'), u:'mm', n:1},
       {k:'e', ab:'e', l:b('فاصله تخت تا لوله','Flat to tube'), u:'mm', n:1, hide:true},
       {k:'g', ab:'g', l:b('طول تخت','Flat length'), u:'mm', n:1, hide:true},
-      {k:'wt', ab:'kg', l:b('وزن','Weight'), u:'kg', n:1},
+      {k:'wt', ab:'kg', l:b('وزن کل','Total weight'), u:'kg', n:1},
+      {k:'wr', ab:'kg', l:b('وزن قطعات دوار','Rotating parts weight'), u:'kg', n:1, hide:true},
+      {k:'cap', ab:'daN', l:b('ظرفیت بار (سرعت m/s → daN)','Load capacity (speed m/s → daN)'), hide:true},
       {k:'mat', l:b('جنس','Material'), hide:true, fmt:r => L(MAT[r.mat]) || L(r.mat)},
       {k:'code', ab:'Code', l:b('کد سفارش ASA','ASA order code'), fmt:r => (r.code||'') + (r.eqcode ? ' (' + r.eqcode + ')' : ''), html:r => `<span dir="ltr">${eqs(r.code||'', r.eqcode)}</span>`},
       {k:'note', l:b('توضیحات','Notes'), hide:true}

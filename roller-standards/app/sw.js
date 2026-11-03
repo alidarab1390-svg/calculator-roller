@@ -1,5 +1,5 @@
 // Asaroll Rollers & Standards — offline service worker (build 1.1)
-const CACHE = 'asaroll-rs-be9573bfcf';
+const CACHE = 'asaroll-rs-1ce6e5ea8f';
 const CORE = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'maskable-512.png', 'apple-touch-icon.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE))); self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
