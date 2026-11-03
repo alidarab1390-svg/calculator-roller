@@ -17,14 +17,22 @@
     if (type === 'sel') h = `<select id="w_${k}" onchange="wizIn('${k}',this.value)">${opts.map(([o, t]) => `<option value="${esc(o)}" ${String(o) === String(v) ? 'selected' : ''}>${esc(L(t))}</option>`).join('')}</select>`;
     else if (type === 'chk') h = `<input type="checkbox" id="w_${k}" ${v ? 'checked' : ''} onchange="wizIn('${k}',this.checked)" style="width:auto;align-self:flex-start">`;
     else h = `<input id="w_${k}" type="number" step="any" value="${esc(v)}" placeholder="${esc(hint ? L(hint) : '')}" onchange="wizIn('${k}',this.value)">`;
-    return `<label>${esc(L(lab))}${unit ? ` <small>(${unit})</small>` : ''}${h}</label>`;
+    return `<label><span class="lh">${esc(L(lab))}${unit ? ` <small>(${unit})</small>` : ''}${tip(HINTS[k])}</span>${h}</label>`;
   };
+  /* چگالی و زاویه سرریز: از ماده پر می‌شوند و مقدار دستی هر ماده به خاطر سپرده می‌شود */
+  const matMem = () => CS.matMem || (CS.matMem = {});
+  const fillMat = w => { const m = findRow('materials', w.inp.mat); if (!m) return; const mm = matMem()[m.id] || {};
+    if (w.inp.rho === '' || w.inp.rho == null) w.inp.rho = mm.rho ?? m.rho;
+    if (w.inp.beta === '' || w.inp.beta == null) w.inp.beta = mm.beta ?? m.sur; };
+  const rhoLab = () => { const m = findRow('materials', W().inp.mat);
+    return m ? b(`چگالی (\u2066${m.rmin}–${m.rmax}\u2069)`, `Density (${m.rmin}–${m.rmax})`) : b('چگالی','Density'); };
   const auto = b('خودکار', 'auto');
   function form(){
+    fillMat(W());
     const mats = rowsOf('materials').map(m => [m.id, m.name]);
     return `<details open class="fs"><summary>⛰ ${T('ماده و ظرفیت','Material & capacity')}</summary><div class="form">
       ${I('mat', b('ماده','Material'), 'sel', mats)}${I('Q', b('ظرفیت','Capacity'), 'n', null, 't/h')}
-      ${I('rho', b('چگالی (خالی = از ماده)','Density (blank = material)'), 'n', null, 't/m³', auto)}${I('beta', b('زاویه سرریز β','Surcharge β'), 'n', null, '°', auto)}
+      ${I('rho', rhoLab(), 'n', null, 't/m³', auto)}${I('beta', b('زاویه سرریز β','Surcharge β'), 'n', null, '°', auto)}
       ${I('lump', b('اندازه کلوخه','Lump size'), 'sel', FD.map((x, i) => [i, x[0]]))}${I('drop', b('ارتفاع سقوط در بارگیری','Drop height at loading'), 'n', null, 'm')}
       ${I('temp', b('دمای ماده','Material temperature'), 'n', null, '°C')}${I('sticky', b('ماده چسبنده','Sticky material'), 'chk')}
       ${I('wet', b('محیط مرطوب','Wet conditions'), 'chk')}${I('oil', b('ماده روغنی','Oily material'), 'chk')}${I('fire', b('نیاز به ضد آتش','Fire resistant required'), 'chk')}
@@ -50,7 +58,12 @@
       ${I('poly', b('اجازه رولیک پلیمری','Allow polymer rollers'), 'sel', [['no', b('خیر','no')], ['yes', b('بله','yes')]])}
     </div></details>`;
   }
-  window.wizIn = (k, v) => { const w = W(); w.inp[k] = typeof v === 'boolean' ? v : (v === '' ? '' : (isNaN(+v) ? v : +v)); if (['bw', 'arr', 'lam', 'v', 'beltType', 'Q', 'L'].includes(k)) w.ovr = {}; saveCS(); run(); };
+  window.wizIn = (k, v) => { const w = W(); w.inp[k] = typeof v === 'boolean' ? v : (v === '' ? '' : (isNaN(+v) ? v : +v));
+    if (k === 'mat'){ w.inp.rho = ''; w.inp.beta = ''; fillMat(w); ['rho', 'beta'].forEach(x => { const e = $('w_' + x); if (e) e.value = w.inp[x]; });
+      const lb = $('w_rho') && $('w_rho').parentNode.querySelector('.lh'); if (lb) lb.firstChild.textContent = L(rhoLab()) + ' '; }
+    if (k === 'rho' || k === 'beta'){ const m = findRow('materials', w.inp.mat);
+      if (m){ const mm = matMem()[m.id] || (matMem()[m.id] = {}); if (w.inp[k] === '') { delete mm[k]; fillMat(w); const e = $('w_' + k); if (e) e.value = w.inp[k]; } else mm[k] = w.inp[k]; } }
+    if (['bw', 'arr', 'lam', 'v', 'beltType', 'Q', 'L'].includes(k)) w.ovr = {}; saveCS(); run(); };
   window.wizOvr = (k, v) => { const w = W(); if (v === '' || v == null) delete w.ovr[k]; else w.ovr[k] = v; saveCS(); run(); };
   window.wizTab = k => { W().tab = k; saveCS(); out(); };
 
@@ -198,7 +211,7 @@
   /* ── رندر بخش ── */
   CALC.wiz = el => {
     const w = W(), pj = Object.keys(PJ());
-    el.innerHTML = `<div class="card"><div class="ch"><span>🏭 ${T('طراحی کامل نوار نقاله (۰ تا ۱۰۰)','Complete belt conveyor design (0 to 100)')}</span><small>DIN 22101 · ISO 5048 · CEMA</small></div>
+    el.innerHTML = `<div class="card"><div class="ch"><span>🏭 ${T('طراحی کامل نوار نقاله (۰ تا ۱۰۰)','Complete belt conveyor design (0 to 100)')}</span><small>DIN 22101 · ISO 5048 · CEMA ${guideBtn('wiz')}</small></div>
       <div class="bar"><select onchange="wizLoad(this.value)"><option value="">📂 ${T('پروژه‌های ذخیره‌شده','Saved projects')} (${pj.length})</option>${pj.map(n => `<option ${n === w.name ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>
         <span class="cnt" style="margin:0">${esc(w.name || '')}</span>
         <button class="btn" onclick="wizSave()">💾 ${T('ذخیره پروژه','Save project')}</button><button class="btn" onclick="wizNew()">🆕 ${T('جدید','New')}</button><button class="btn" onclick="wizDel()">🗑</button>

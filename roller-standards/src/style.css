@@ -116,3 +116,10 @@ details.fs{border:1.5px solid var(--bd);border-radius:10px;margin-bottom:10px;ba
 .bars div{display:grid;grid-template-columns:minmax(120px,190px) 1fr minmax(120px,170px);gap:8px;align-items:center;margin:4px 0;font-size:.8rem}.bars i{display:block;height:10px;border-radius:5px;background:linear-gradient(90deg,var(--a),var(--a2))}.bars b{direction:ltr;text-align:end}
 .bom input{width:80px;padding:3px 5px;border:1px solid var(--bd);border-radius:5px;text-align:center}.bom tr.ed td{background:var(--wrb)}
 .out .seg{margin:14px 0 8px}
+/* خودآموز: ⓘ و 📘 */
+.lh{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.tip{position:relative;display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;background:var(--p);color:#fff;font-size:.72rem;font-weight:800;cursor:help;flex:none;outline:none}
+.tip:hover,.tip:focus{background:var(--p2)}
+#tipbox{position:fixed;z-index:1000;max-width:min(280px,calc(100vw - 24px));padding:8px 11px;border-radius:8px;background:#1f2937;color:#fff;font-size:.78rem;font-weight:500;line-height:1.75;box-shadow:0 6px 18px rgba(0,0,0,.28);pointer-events:none;display:none}
+.gbtn{border:1px solid rgba(255,255,255,.6);background:rgba(255,255,255,.15);color:inherit;border-radius:20px;padding:3px 10px;font:inherit;font-size:.75rem;font-weight:700;cursor:pointer;margin-inline-start:6px}
+.gbtn:hover{background:rgba(255,255,255,.3)}

@@ -355,7 +355,7 @@ function rowSearch(k, r){
 }
 function renderDS(k, el){
   const D = DS[k], V = vs(k);
-  el.innerHTML = `<div class="card"><div class="ch"><span>${D.icon} ${esc(L(D.title))}</span><small>${esc(L(SRC[D.src])||'')}</small></div>
+  el.innerHTML = `<div class="card"><div class="ch"><span>${D.icon} ${esc(L(D.title))}</span><small>${esc(L(SRC[D.src])||'')} ${guideBtn('ds')}</small></div>
     <div class="bar"><input type="search" class="q" id="q_${k}" value="${esc(V.q)}" placeholder="${esc(L(I18N.search_ph))}" oninput="dsQ('${k}',this.value)">
     <button class="btn" onclick="dsXlsx('${k}')">📊 Excel</button><button class="btn" onclick="dsPdf('${k}')">📄 PDF</button>
     <button class="btn lk" onclick="dsEdit('${k}',null)">➕ ${esc(L(I18N.add))}</button>
@@ -510,7 +510,7 @@ const CARDS = {
 };
 function renderCards(k, el){
   const list = CARDS[k];
-  el.innerHTML = `<div class="cards">${list.map((c,i) => `<button class="kc" onclick="showCard('${k}',${i})"><span class="ki">${c.icon}</span><b>${esc(L(c.t))}</b><small>${esc(L(c.s))}</small></button>`).join('')}</div>`;
+  el.innerHTML = `<p class="note" style="margin:0 0 8px">💡 ${esc(L(GUIDES.cards)[0])}</p><div class="cards">${list.map((c,i) => `<button class="kc" onclick="showCard('${k}',${i})"><span class="ki">${c.icon}</span><b>${esc(L(c.t))}</b><small>${esc(L(c.s))}</small></button>`).join('')}</div>`;
 }
 window.showCard = (k, i, ang) => {
   const c = CARDS[k][i];
@@ -553,7 +553,7 @@ function capCEMA(bw, arr, lam, beta, vfpm, dens, delta){
   return Object.assign(T, {bU, l, Aft, Qft, tph, tphM:tph*0.90718});
 }
 const sel = (id, opts, v) => `<select id="${id}" oninput="calcRun()">${opts.map(o => { const [val,lab] = Array.isArray(o) ? o : [o,o]; return `<option value="${val}" ${String(val)===String(v)?'selected':''}>${esc(lab)}</option>`; }).join('')}</select>`;
-const fld = (lab, html, u) => `<label>${lab}${u?` <small>(${u})</small>`:''}${html}</label>`;
+const fld = (lab, html, u, hk) => `<label><span class="lh">${lab}${u?` <small>(${u})</small>`:''}${hk && typeof HINTS !== 'undefined' ? tip(HINTS[hk]) : ''}</span>${html}</label>`;
 const ninp = (id, v, step) => `<input id="${id}" type="number" step="${step||'any'}" value="${v}" oninput="calcRun()">`;
 let calcRun = () => {};
 window.calcRun = () => calcRun();
@@ -565,24 +565,29 @@ CALC.cap = el => {
   const din = CS.capMode !== 'cema';
   const V = CS.cap || (CS.cap = {bw:1000, arr:'t3', lam:35, beta:20, v:2.5, rho:1.6, delta:0, Q:0, bwi:36, lamc:35, vf:500, dens:100, mat:''});
   el.innerHTML = `<div class="card"><div class="ch"><span>🧮 ${esc(L(b('ظرفیت نوار و عرض لازم','Belt capacity & required width')))}</span>
-    <div class="seg sm inl"><button class="${din?'on':''}" onclick="CS.capMode='din';saveCS();renderTab()">DIN 22101 / ISO 5048</button><button class="${!din?'on':''}" onclick="CS.capMode='cema';saveCS();renderTab()">CEMA</button></div></div>
+    <div class="seg sm inl"><button class="${din?'on':''}" onclick="CS.capMode='din';saveCS();renderTab()">DIN 22101 / ISO 5048</button><button class="${!din?'on':''}" onclick="CS.capMode='cema';saveCS();renderTab()">CEMA</button></div>${guideBtn('cap')}</div>
     <div class="calc"><div class="form">
-    ${fld(L(b('ماده','Material')), sel('c_mat', matOpts(), V.mat))}
+    ${fld(L(b('ماده','Material')), sel('c_mat', matOpts(), V.mat), '', 'c_mat')}
     ${din ? fld(L(b('عرض نوار BW','Belt width BW')), sel('c_bw', DIN_BW, V.bw), 'mm') : fld(L(b('عرض نوار BW','Belt width BW')), sel('c_bwi', CEMA_BW, V.bwi), 'in')}
     ${fld(L(b('چیدمان','Arrangement')), sel('c_arr', [['t3',L(ARR.t3)],['v2',L(ARR.v2)],['flat',L(ARR.flat)]], V.arr))}
     ${fld(L(b('زاویه ناودانی λ','Troughing angle λ')), sel('c_lam', din ? [20,25,30,35,40,45] : [20,35,45], din ? V.lam : V.lamc), '°')}
-    ${fld(L(b('زاویه سرریز دینامیکی β','Dynamic surcharge β')), ninp('c_beta', V.beta), '°')}
+    ${fld(L(b('زاویه سرریز دینامیکی β','Dynamic surcharge β')), ninp('c_beta', V.beta), '°', 'beta')}
     ${din ? fld(L(b('سرعت نوار v','Belt speed v')), ninp('c_v', V.v), 'm/s') : fld(L(b('سرعت نوار v','Belt speed v')), ninp('c_vf', V.vf), 'ft/min')}
-    ${din ? fld(L(b('چگالی ρ','Density ρ')), ninp('c_rho', V.rho), 't/m³') : fld(L(b('چگالی','Density')), ninp('c_dens', V.dens), 'lb/ft³')}
-    ${fld(L(b('شیب نوار δ','Inclination δ')), ninp('c_delta', V.delta), '°')}
-    ${fld(L(b('ظرفیت لازم (اختیاری)','Required capacity (optional)')), ninp('c_Q', V.Q), din ? 't/h' : 'stph')}
+    ${din ? fld(L(b('چگالی ρ','Density ρ')), ninp('c_rho', V.rho), 't/m³', 'rho') : fld(L(b('چگالی','Density')), ninp('c_dens', V.dens), 'lb/ft³', 'rho')}
+    ${fld(L(b('شیب نوار δ','Inclination δ')), ninp('c_delta', V.delta), '°', 'c_delta')}
+    ${fld(L(b('ظرفیت لازم (اختیاری)','Required capacity (optional)')), ninp('c_Q', V.Q), din ? 't/h' : 'stph', 'c_Q')}
     </div><div id="c_out" class="out"></div></div>
     <p class="note">${esc(L(b('روش DIN/ISO: عرض مفید b = 0.9·BW − 0.05 m ؛ سطح مقطع A = A1 (سرریز) + A2 (ذوزنقه) ؛ ضریب شیب k طبق ISO 5048. روش CEMA: فاصله لبه c = 0.055·b + 0.9 in و طول رولیک وسط l = 0.371·b + 0.25 in (سه رولیک مساوی).','DIN/ISO: usable width b = 0.9·BW − 0.05 m; area A = A1 (surcharge) + A2 (trapezoid); slope factor k per ISO 5048. CEMA: edge distance c = 0.055·b + 0.9 in and centre roll l = 0.371·b + 0.25 in (three equal rolls).')))}</p></div>`;
   calcRun = () => {
     const mid = $('c_mat').value;
     if (mid !== V.mat){ V.mat = mid; const m = findRow('materials', mid);
-      if (m){ $('c_beta').value = m.sur; if (din) $('c_rho').value = m.rho; else $('c_dens').value = Math.round(m.rho*62.43); } }
+      if (m){ const mm = (CS.matMem || {})[m.id] || {}; $('c_beta').value = mm.beta ?? m.sur; const r0 = mm.rho ?? m.rho;
+        if (din) $('c_rho').value = r0; else $('c_dens').value = Math.round(r0*62.43); } }
     const m = findRow('materials', V.mat);
+    if (m && mid === V.mat){ const mm = (CS.matMem || (CS.matMem = {}))[m.id] || {}, rr = din ? num('c_rho') : num('c_dens')/62.43, bb = num('c_beta');
+      if (rr > 0 && Math.abs(rr - m.rho) > 0.005) mm.rho = +rr.toFixed(3); else delete mm.rho;
+      if (bb > 0 && bb !== m.sur) mm.beta = bb; else delete mm.beta;
+      if (Object.keys(mm).length) CS.matMem[m.id] = mm; else delete CS.matMem[m.id]; }
     V.arr = $('c_arr').value; V.beta = num('c_beta'); V.delta = num('c_delta') || 0; V.Q = num('c_Q') || 0;
     let h = '', warn = [];
     if (m && V.delta > m.inc) warn.push(L(b(`شیب ${V.delta}° از بیشینه شیب مجاز این ماده (${m.inc}°) بیشتر است — خطر برگشت مواد.`, `Inclination ${V.delta}° exceeds the material's max. (${m.inc}°) — risk of roll-back.`)));
@@ -620,22 +625,22 @@ window.useMaterial = id => {
 
 CALC.load = el => {
   const V = CS.load || (CS.load = {Q:800, v:2.5, bw:1000, arr:'t3', lam:35, a0:1.2, au:3, qb:13, D:133, lump:1, fs:2, fm:1, life:30000, rarr:'flat'});
-  el.innerHTML = `<div class="card"><div class="ch"><span>⚖️ ${esc(L(b('بار روی رولیک، عمر بلبرینگ و انتخاب سری','Idler load, bearing life & series selection')))}</span><small>ASA · DIN 22101 · CEMA 502</small></div>
+  el.innerHTML = `<div class="card"><div class="ch"><span>⚖️ ${esc(L(b('بار روی رولیک، عمر بلبرینگ و انتخاب سری','Idler load, bearing life & series selection')))}</span><small>ASA · DIN 22101 · CEMA 502 ${guideBtn('load')}</small></div>
     <div class="calc"><div class="form">
-    ${fld(L(b('ظرفیت Qm','Capacity Qm')), ninp('l_Q', V.Q), 't/h')}
-    ${fld(L(b('سرعت v','Speed v')), ninp('l_v', V.v), 'm/s')}
+    ${fld(L(b('ظرفیت Qm','Capacity Qm')), ninp('l_Q', V.Q), 't/h', 'Q')}
+    ${fld(L(b('سرعت v','Speed v')), ninp('l_v', V.v), 'm/s', 'v')}
     ${fld(L(b('عرض نوار','Belt width')), sel('l_bw', DIN_BW, V.bw), 'mm')}
     ${fld(L(b('چیدمان رفت','Carrying arrangement')), sel('l_arr', [['t3',L(ARR.t3)],['v2',L(ARR.v2)],['flat',L(ARR.flat)]], V.arr))}
     ${fld(L(b('زاویه λ','Angle λ')), sel('l_lam', [20,25,30,35,40,45], V.lam), '°')}
     ${fld(L(b('چیدمان برگشت','Return arrangement')), sel('l_rarr', [['flat',L(ARR.flat)],['v2',L(ARR.v2)]], V.rarr))}
-    ${fld(L(b('فاصله پایه رفت a0','Carrying pitch a0')), ninp('l_a0', V.a0) + `<button class="btn sm" type="button" onclick="suggestPitch()">${esc(L(b('پیشنهاد DIN','DIN suggestion')))}</button>`, 'm')}
-    ${fld(L(b('فاصله پایه برگشت au','Return pitch au')), ninp('l_au', V.au), 'm')}
-    ${fld(L(b('وزن نوار qb','Belt mass qb')), ninp('l_qb', V.qb) + `<button class="btn sm" type="button" onclick="$('l_qb').value=BELT_WT[$('l_bw').value]||'';calcRun()">${esc(L(b('تخمین','Estimate')))}</button>`, 'kg/m')}
+    ${fld(L(b('فاصله پایه رفت a0','Carrying pitch a0')), ninp('l_a0', V.a0) + `<button class="btn sm" type="button" onclick="suggestPitch()">${esc(L(b('پیشنهاد DIN','DIN suggestion')))}</button>`, 'm', 'l_a0')}
+    ${fld(L(b('فاصله پایه برگشت au','Return pitch au')), ninp('l_au', V.au), 'm', 'l_au')}
+    ${fld(L(b('وزن نوار qb','Belt mass qb')), ninp('l_qb', V.qb) + `<button class="btn sm" type="button" onclick="$('l_qb').value=BELT_WT[$('l_bw').value]||'';calcRun()">${esc(L(b('تخمین','Estimate')))}</button>`, 'kg/m', 'l_qb')}
     ${fld(L(b('قطر رولیک D','Roller dia. D')), sel('l_D', [63,76,89,102,108,133,159,194], V.D), 'mm')}
-    ${fld(L(b('اندازه کلوخه (Fd)','Lump size (Fd)')), sel('l_lump', FD.map((x,i) => [i, L(x[0])]), V.lump))}
-    ${fld(L(b('ساعت کار (Fs)','Operating hours (Fs)')), sel('l_fs', FS.map((x,i) => [i, L(x[0])+' — '+x[1]]), V.fs))}
-    ${fld(L(b('محیط (Fm)','Environment (Fm)')), sel('l_fm', FM.map((x,i) => [i, L(x[0])+' — '+x[1]]), V.fm))}
-    ${fld(L(b('عمر لازم بلبرینگ','Required bearing life')), ninp('l_life', V.life), 'h')}
+    ${fld(L(b('اندازه کلوخه (Fd)','Lump size (Fd)')), sel('l_lump', FD.map((x,i) => [i, L(x[0])]), V.lump), '', 'lump')}
+    ${fld(L(b('ساعت کار (Fs)','Operating hours (Fs)')), sel('l_fs', FS.map((x,i) => [i, L(x[0])+' — '+x[1]]), V.fs), '', 'fs')}
+    ${fld(L(b('محیط (Fm)','Environment (Fm)')), sel('l_fm', FM.map((x,i) => [i, L(x[0])+' — '+x[1]]), V.fm), '', 'fm')}
+    ${fld(L(b('عمر لازم بلبرینگ','Required bearing life')), ninp('l_life', V.life), 'h', 'l_life')}
     </div><div id="l_out" class="out"></div></div>
     <p class="note">${esc(L(b('Ca = a0·(qb + Qm/(3.6·v))·0.981 [daN] ؛ ca = Ca·Fd·Fs·Fm·Fp ؛ Cr = au·qb·0.981 ؛ cr = Cr·Fs·Fm·Fp. عمر L10h با بار هر بلبرینگ = نصف بار رولیک. شیب شافت در محل بلبرینگ θ = P·a·(C−2a)/(2·E·I) با حد 0.0025 rad. ضرایب را با کاتالوگ تطبیق دهید.','Ca = a0·(qb + Qm/(3.6·v))·0.981 [daN]; ca = Ca·Fd·Fs·Fm·Fp; Cr = au·qb·0.981; cr = Cr·Fs·Fm·Fp. L10h with load per bearing = half the roller load. Spindle slope at bearing θ = P·a·(C−2a)/(2·E·I), limit 0.0025 rad. Verify factors against the catalogue.')))}</p></div>`;
   calcRun = () => {
@@ -872,6 +877,7 @@ document.addEventListener('DOMContentLoaded', async () => { if (window.__RS_OLD)
   Object.assign(APP, {lang: LS.get('rs_lang','fa'), tab: LS.get('rs_tab','rollers'), sec: LS.get('rs_sec',{})});
   Object.assign(CS, LS.get('rs_calc', {capMode:'din'}));
   renderAll();
+  try { showWelcome(); } catch(e){}
   const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
   if ((location.protocol === 'https:' || location.hostname === 'localhost') && !standalone) $('install_btn').classList.remove('hidden'); });
 /* نسخه نصبی (PWA): فقط وقتی از روی وب (https) باز شود */

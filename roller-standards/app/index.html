@@ -132,6 +132,13 @@ details.fs{border:1.5px solid var(--bd);border-radius:10px;margin-bottom:10px;ba
 .bars div{display:grid;grid-template-columns:minmax(120px,190px) 1fr minmax(120px,170px);gap:8px;align-items:center;margin:4px 0;font-size:.8rem}.bars i{display:block;height:10px;border-radius:5px;background:linear-gradient(90deg,var(--a),var(--a2))}.bars b{direction:ltr;text-align:end}
 .bom input{width:80px;padding:3px 5px;border:1px solid var(--bd);border-radius:5px;text-align:center}.bom tr.ed td{background:var(--wrb)}
 .out .seg{margin:14px 0 8px}
+/* خودآموز: ⓘ و 📘 */
+.lh{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.tip{position:relative;display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;background:var(--p);color:#fff;font-size:.72rem;font-weight:800;cursor:help;flex:none;outline:none}
+.tip:hover,.tip:focus{background:var(--p2)}
+#tipbox{position:fixed;z-index:1000;max-width:min(280px,calc(100vw - 24px));padding:8px 11px;border-radius:8px;background:#1f2937;color:#fff;font-size:.78rem;font-weight:500;line-height:1.75;box-shadow:0 6px 18px rgba(0,0,0,.28);pointer-events:none;display:none}
+.gbtn{border:1px solid rgba(255,255,255,.6);background:rgba(255,255,255,.15);color:inherit;border-radius:20px;padding:3px 10px;font:inherit;font-size:.75rem;font-weight:700;cursor:pointer;margin-inline-start:6px}
+.gbtn:hover{background:rgba(255,255,255,.3)}
 </style>
 </head>
 <body>
@@ -1475,7 +1482,7 @@ function rowSearch(k, r){
 }
 function renderDS(k, el){
   const D = DS[k], V = vs(k);
-  el.innerHTML = `<div class="card"><div class="ch"><span>${D.icon} ${esc(L(D.title))}</span><small>${esc(L(SRC[D.src])||'')}</small></div>
+  el.innerHTML = `<div class="card"><div class="ch"><span>${D.icon} ${esc(L(D.title))}</span><small>${esc(L(SRC[D.src])||'')} ${guideBtn('ds')}</small></div>
     <div class="bar"><input type="search" class="q" id="q_${k}" value="${esc(V.q)}" placeholder="${esc(L(I18N.search_ph))}" oninput="dsQ('${k}',this.value)">
     <button class="btn" onclick="dsXlsx('${k}')">📊 Excel</button><button class="btn" onclick="dsPdf('${k}')">📄 PDF</button>
     <button class="btn lk" onclick="dsEdit('${k}',null)">➕ ${esc(L(I18N.add))}</button>
@@ -1630,7 +1637,7 @@ const CARDS = {
 };
 function renderCards(k, el){
   const list = CARDS[k];
-  el.innerHTML = `<div class="cards">${list.map((c,i) => `<button class="kc" onclick="showCard('${k}',${i})"><span class="ki">${c.icon}</span><b>${esc(L(c.t))}</b><small>${esc(L(c.s))}</small></button>`).join('')}</div>`;
+  el.innerHTML = `<p class="note" style="margin:0 0 8px">💡 ${esc(L(GUIDES.cards)[0])}</p><div class="cards">${list.map((c,i) => `<button class="kc" onclick="showCard('${k}',${i})"><span class="ki">${c.icon}</span><b>${esc(L(c.t))}</b><small>${esc(L(c.s))}</small></button>`).join('')}</div>`;
 }
 window.showCard = (k, i, ang) => {
   const c = CARDS[k][i];
@@ -1673,7 +1680,7 @@ function capCEMA(bw, arr, lam, beta, vfpm, dens, delta){
   return Object.assign(T, {bU, l, Aft, Qft, tph, tphM:tph*0.90718});
 }
 const sel = (id, opts, v) => `<select id="${id}" oninput="calcRun()">${opts.map(o => { const [val,lab] = Array.isArray(o) ? o : [o,o]; return `<option value="${val}" ${String(val)===String(v)?'selected':''}>${esc(lab)}</option>`; }).join('')}</select>`;
-const fld = (lab, html, u) => `<label>${lab}${u?` <small>(${u})</small>`:''}${html}</label>`;
+const fld = (lab, html, u, hk) => `<label><span class="lh">${lab}${u?` <small>(${u})</small>`:''}${hk && typeof HINTS !== 'undefined' ? tip(HINTS[hk]) : ''}</span>${html}</label>`;
 const ninp = (id, v, step) => `<input id="${id}" type="number" step="${step||'any'}" value="${v}" oninput="calcRun()">`;
 let calcRun = () => {};
 window.calcRun = () => calcRun();
@@ -1685,24 +1692,29 @@ CALC.cap = el => {
   const din = CS.capMode !== 'cema';
   const V = CS.cap || (CS.cap = {bw:1000, arr:'t3', lam:35, beta:20, v:2.5, rho:1.6, delta:0, Q:0, bwi:36, lamc:35, vf:500, dens:100, mat:''});
   el.innerHTML = `<div class="card"><div class="ch"><span>🧮 ${esc(L(b('ظرفیت نوار و عرض لازم','Belt capacity & required width')))}</span>
-    <div class="seg sm inl"><button class="${din?'on':''}" onclick="CS.capMode='din';saveCS();renderTab()">DIN 22101 / ISO 5048</button><button class="${!din?'on':''}" onclick="CS.capMode='cema';saveCS();renderTab()">CEMA</button></div></div>
+    <div class="seg sm inl"><button class="${din?'on':''}" onclick="CS.capMode='din';saveCS();renderTab()">DIN 22101 / ISO 5048</button><button class="${!din?'on':''}" onclick="CS.capMode='cema';saveCS();renderTab()">CEMA</button></div>${guideBtn('cap')}</div>
     <div class="calc"><div class="form">
-    ${fld(L(b('ماده','Material')), sel('c_mat', matOpts(), V.mat))}
+    ${fld(L(b('ماده','Material')), sel('c_mat', matOpts(), V.mat), '', 'c_mat')}
     ${din ? fld(L(b('عرض نوار BW','Belt width BW')), sel('c_bw', DIN_BW, V.bw), 'mm') : fld(L(b('عرض نوار BW','Belt width BW')), sel('c_bwi', CEMA_BW, V.bwi), 'in')}
     ${fld(L(b('چیدمان','Arrangement')), sel('c_arr', [['t3',L(ARR.t3)],['v2',L(ARR.v2)],['flat',L(ARR.flat)]], V.arr))}
     ${fld(L(b('زاویه ناودانی λ','Troughing angle λ')), sel('c_lam', din ? [20,25,30,35,40,45] : [20,35,45], din ? V.lam : V.lamc), '°')}
-    ${fld(L(b('زاویه سرریز دینامیکی β','Dynamic surcharge β')), ninp('c_beta', V.beta), '°')}
+    ${fld(L(b('زاویه سرریز دینامیکی β','Dynamic surcharge β')), ninp('c_beta', V.beta), '°', 'beta')}
     ${din ? fld(L(b('سرعت نوار v','Belt speed v')), ninp('c_v', V.v), 'm/s') : fld(L(b('سرعت نوار v','Belt speed v')), ninp('c_vf', V.vf), 'ft/min')}
-    ${din ? fld(L(b('چگالی ρ','Density ρ')), ninp('c_rho', V.rho), 't/m³') : fld(L(b('چگالی','Density')), ninp('c_dens', V.dens), 'lb/ft³')}
-    ${fld(L(b('شیب نوار δ','Inclination δ')), ninp('c_delta', V.delta), '°')}
-    ${fld(L(b('ظرفیت لازم (اختیاری)','Required capacity (optional)')), ninp('c_Q', V.Q), din ? 't/h' : 'stph')}
+    ${din ? fld(L(b('چگالی ρ','Density ρ')), ninp('c_rho', V.rho), 't/m³', 'rho') : fld(L(b('چگالی','Density')), ninp('c_dens', V.dens), 'lb/ft³', 'rho')}
+    ${fld(L(b('شیب نوار δ','Inclination δ')), ninp('c_delta', V.delta), '°', 'c_delta')}
+    ${fld(L(b('ظرفیت لازم (اختیاری)','Required capacity (optional)')), ninp('c_Q', V.Q), din ? 't/h' : 'stph', 'c_Q')}
     </div><div id="c_out" class="out"></div></div>
     <p class="note">${esc(L(b('روش DIN/ISO: عرض مفید b = 0.9·BW − 0.05 m ؛ سطح مقطع A = A1 (سرریز) + A2 (ذوزنقه) ؛ ضریب شیب k طبق ISO 5048. روش CEMA: فاصله لبه c = 0.055·b + 0.9 in و طول رولیک وسط l = 0.371·b + 0.25 in (سه رولیک مساوی).','DIN/ISO: usable width b = 0.9·BW − 0.05 m; area A = A1 (surcharge) + A2 (trapezoid); slope factor k per ISO 5048. CEMA: edge distance c = 0.055·b + 0.9 in and centre roll l = 0.371·b + 0.25 in (three equal rolls).')))}</p></div>`;
   calcRun = () => {
     const mid = $('c_mat').value;
     if (mid !== V.mat){ V.mat = mid; const m = findRow('materials', mid);
-      if (m){ $('c_beta').value = m.sur; if (din) $('c_rho').value = m.rho; else $('c_dens').value = Math.round(m.rho*62.43); } }
+      if (m){ const mm = (CS.matMem || {})[m.id] || {}; $('c_beta').value = mm.beta ?? m.sur; const r0 = mm.rho ?? m.rho;
+        if (din) $('c_rho').value = r0; else $('c_dens').value = Math.round(r0*62.43); } }
     const m = findRow('materials', V.mat);
+    if (m && mid === V.mat){ const mm = (CS.matMem || (CS.matMem = {}))[m.id] || {}, rr = din ? num('c_rho') : num('c_dens')/62.43, bb = num('c_beta');
+      if (rr > 0 && Math.abs(rr - m.rho) > 0.005) mm.rho = +rr.toFixed(3); else delete mm.rho;
+      if (bb > 0 && bb !== m.sur) mm.beta = bb; else delete mm.beta;
+      if (Object.keys(mm).length) CS.matMem[m.id] = mm; else delete CS.matMem[m.id]; }
     V.arr = $('c_arr').value; V.beta = num('c_beta'); V.delta = num('c_delta') || 0; V.Q = num('c_Q') || 0;
     let h = '', warn = [];
     if (m && V.delta > m.inc) warn.push(L(b(`شیب ${V.delta}° از بیشینه شیب مجاز این ماده (${m.inc}°) بیشتر است — خطر برگشت مواد.`, `Inclination ${V.delta}° exceeds the material's max. (${m.inc}°) — risk of roll-back.`)));
@@ -1740,22 +1752,22 @@ window.useMaterial = id => {
 
 CALC.load = el => {
   const V = CS.load || (CS.load = {Q:800, v:2.5, bw:1000, arr:'t3', lam:35, a0:1.2, au:3, qb:13, D:133, lump:1, fs:2, fm:1, life:30000, rarr:'flat'});
-  el.innerHTML = `<div class="card"><div class="ch"><span>⚖️ ${esc(L(b('بار روی رولیک، عمر بلبرینگ و انتخاب سری','Idler load, bearing life & series selection')))}</span><small>ASA · DIN 22101 · CEMA 502</small></div>
+  el.innerHTML = `<div class="card"><div class="ch"><span>⚖️ ${esc(L(b('بار روی رولیک، عمر بلبرینگ و انتخاب سری','Idler load, bearing life & series selection')))}</span><small>ASA · DIN 22101 · CEMA 502 ${guideBtn('load')}</small></div>
     <div class="calc"><div class="form">
-    ${fld(L(b('ظرفیت Qm','Capacity Qm')), ninp('l_Q', V.Q), 't/h')}
-    ${fld(L(b('سرعت v','Speed v')), ninp('l_v', V.v), 'm/s')}
+    ${fld(L(b('ظرفیت Qm','Capacity Qm')), ninp('l_Q', V.Q), 't/h', 'Q')}
+    ${fld(L(b('سرعت v','Speed v')), ninp('l_v', V.v), 'm/s', 'v')}
     ${fld(L(b('عرض نوار','Belt width')), sel('l_bw', DIN_BW, V.bw), 'mm')}
     ${fld(L(b('چیدمان رفت','Carrying arrangement')), sel('l_arr', [['t3',L(ARR.t3)],['v2',L(ARR.v2)],['flat',L(ARR.flat)]], V.arr))}
     ${fld(L(b('زاویه λ','Angle λ')), sel('l_lam', [20,25,30,35,40,45], V.lam), '°')}
     ${fld(L(b('چیدمان برگشت','Return arrangement')), sel('l_rarr', [['flat',L(ARR.flat)],['v2',L(ARR.v2)]], V.rarr))}
-    ${fld(L(b('فاصله پایه رفت a0','Carrying pitch a0')), ninp('l_a0', V.a0) + `<button class="btn sm" type="button" onclick="suggestPitch()">${esc(L(b('پیشنهاد DIN','DIN suggestion')))}</button>`, 'm')}
-    ${fld(L(b('فاصله پایه برگشت au','Return pitch au')), ninp('l_au', V.au), 'm')}
-    ${fld(L(b('وزن نوار qb','Belt mass qb')), ninp('l_qb', V.qb) + `<button class="btn sm" type="button" onclick="$('l_qb').value=BELT_WT[$('l_bw').value]||'';calcRun()">${esc(L(b('تخمین','Estimate')))}</button>`, 'kg/m')}
+    ${fld(L(b('فاصله پایه رفت a0','Carrying pitch a0')), ninp('l_a0', V.a0) + `<button class="btn sm" type="button" onclick="suggestPitch()">${esc(L(b('پیشنهاد DIN','DIN suggestion')))}</button>`, 'm', 'l_a0')}
+    ${fld(L(b('فاصله پایه برگشت au','Return pitch au')), ninp('l_au', V.au), 'm', 'l_au')}
+    ${fld(L(b('وزن نوار qb','Belt mass qb')), ninp('l_qb', V.qb) + `<button class="btn sm" type="button" onclick="$('l_qb').value=BELT_WT[$('l_bw').value]||'';calcRun()">${esc(L(b('تخمین','Estimate')))}</button>`, 'kg/m', 'l_qb')}
     ${fld(L(b('قطر رولیک D','Roller dia. D')), sel('l_D', [63,76,89,102,108,133,159,194], V.D), 'mm')}
-    ${fld(L(b('اندازه کلوخه (Fd)','Lump size (Fd)')), sel('l_lump', FD.map((x,i) => [i, L(x[0])]), V.lump))}
-    ${fld(L(b('ساعت کار (Fs)','Operating hours (Fs)')), sel('l_fs', FS.map((x,i) => [i, L(x[0])+' — '+x[1]]), V.fs))}
-    ${fld(L(b('محیط (Fm)','Environment (Fm)')), sel('l_fm', FM.map((x,i) => [i, L(x[0])+' — '+x[1]]), V.fm))}
-    ${fld(L(b('عمر لازم بلبرینگ','Required bearing life')), ninp('l_life', V.life), 'h')}
+    ${fld(L(b('اندازه کلوخه (Fd)','Lump size (Fd)')), sel('l_lump', FD.map((x,i) => [i, L(x[0])]), V.lump), '', 'lump')}
+    ${fld(L(b('ساعت کار (Fs)','Operating hours (Fs)')), sel('l_fs', FS.map((x,i) => [i, L(x[0])+' — '+x[1]]), V.fs), '', 'fs')}
+    ${fld(L(b('محیط (Fm)','Environment (Fm)')), sel('l_fm', FM.map((x,i) => [i, L(x[0])+' — '+x[1]]), V.fm), '', 'fm')}
+    ${fld(L(b('عمر لازم بلبرینگ','Required bearing life')), ninp('l_life', V.life), 'h', 'l_life')}
     </div><div id="l_out" class="out"></div></div>
     <p class="note">${esc(L(b('Ca = a0·(qb + Qm/(3.6·v))·0.981 [daN] ؛ ca = Ca·Fd·Fs·Fm·Fp ؛ Cr = au·qb·0.981 ؛ cr = Cr·Fs·Fm·Fp. عمر L10h با بار هر بلبرینگ = نصف بار رولیک. شیب شافت در محل بلبرینگ θ = P·a·(C−2a)/(2·E·I) با حد 0.0025 rad. ضرایب را با کاتالوگ تطبیق دهید.','Ca = a0·(qb + Qm/(3.6·v))·0.981 [daN]; ca = Ca·Fd·Fs·Fm·Fp; Cr = au·qb·0.981; cr = Cr·Fs·Fm·Fp. L10h with load per bearing = half the roller load. Spindle slope at bearing θ = P·a·(C−2a)/(2·E·I), limit 0.0025 rad. Verify factors against the catalogue.')))}</p></div>`;
   calcRun = () => {
@@ -1992,6 +2004,7 @@ document.addEventListener('DOMContentLoaded', async () => { if (window.__RS_OLD)
   Object.assign(APP, {lang: LS.get('rs_lang','fa'), tab: LS.get('rs_tab','rollers'), sec: LS.get('rs_sec',{})});
   Object.assign(CS, LS.get('rs_calc', {capMode:'din'}));
   renderAll();
+  try { showWelcome(); } catch(e){}
   const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
   if ((location.protocol === 'https:' || location.hostname === 'localhost') && !standalone) $('install_btn').classList.remove('hidden'); });
 /* نسخه نصبی (PWA): فقط وقتی از روی وب (https) باز شود */
@@ -2004,6 +2017,95 @@ window.installApp = () => {
     '<b>اندروید (کروم):</b> منوی ⋮ ← «نصب برنامه» یا «افزودن به صفحه اصلی».<br><b>آیفون / آیپد (Safari):</b> دکمه اشتراک‌گذاری ⬆️ ← «Add to Home Screen».<br><b>ویندوز (Edge / Chrome):</b> آیکون نصب ⊕ در نوار آدرس یا منو ← «Apps» ← «Install this site as an app».<br><b>مک:</b> Chrome ← نصب، یا Safari ← File ← Add to Dock.<br>پس از نصب، برنامه با آیکون آسارول و بدون اینترنت اجرا می‌شود.',
     '<b>Android (Chrome):</b> menu ⋮ → "Install app" or "Add to Home screen".<br><b>iPhone / iPad (Safari):</b> Share ⬆️ → "Add to Home Screen".<br><b>Windows (Edge / Chrome):</b> install icon ⊕ in the address bar, or menu → Apps → "Install this site as an app".<br><b>Mac:</b> Chrome → Install, or Safari → File → Add to Dock.<br>Once installed the app runs offline with the Asaroll icon.'))}</div>`);
 };
+
+/* ═══ خودآموز: توضیح فیلدها (ⓘ) و راهنمای بخش‌ها (📘) ═══ */
+const HINTS = {
+  /* طراحی کامل نوار */
+  mat: b('ماده‌ای که حمل می‌شود. با انتخاب آن چگالی و زاویه سرریز خودکار پر می‌شوند. اگر در لیست نیست، نزدیک‌ترین را انتخاب و چگالی را دستی وارد کنید.','Material to convey. Density and surcharge angle fill in automatically. If it is not listed, pick the closest and type the density.'),
+  Q: b('ظرفیت طراحی: بیشترین تُن مواد در ساعت (نه متوسط). مثال: 800','Design capacity: maximum tonnes per hour (not average). Example: 800'),
+  rho: b('چگالی توده‌ای = وزن یک متر مکعب مواد ریخته‌شده (تن بر متر مکعب). از ماده پر می‌شود؛ اگر عدد آزمایشگاهی دارید آن را وارد کنید. مثال: زغال 0.8 ، سنگ آهن 2.4','Bulk density = mass of one cubic metre of loose material (t/m³). Filled from the material; enter a lab value if you have one. E.g. coal 0.8, iron ore 2.4'),
+  beta: b('زاویه سطح مواد روی نوار در حال حرکت (معمولاً 10 تا 25 درجه). از ماده پر می‌شود.','Angle of the material surface on the moving belt (usually 10–25°). Filled from the material.'),
+  lump: b('بزرگ‌ترین اندازه کلوخه‌ها؛ برای ضریب ضربه رولیک‌ها و ضخامت روکش تسمه.','Largest lump size; used for the roller impact factor and belt cover thickness.'),
+  drop: b('ارتفاع سقوط مواد از شوت تا روی نوار در محل بارگیری (متر). مثال: 1.5','Free-fall height from the chute onto the belt (m). Example: 1.5'),
+  temp: b('دمای مواد هنگام بارگیری. بالاتر از 60 درجه، تسمه مقاوم به حرارت انتخاب می‌شود.','Material temperature at loading. Above 60 °C a heat-resistant belt is selected.'),
+  sticky: b('اگر مواد به نوار می‌چسبد (خاک رس، مواد مرطوب)، رولیک برگشت لاستیکی و بلت کلینر ثانویه انتخاب می‌شود.','Tick if material sticks to the belt (clay, wet material): rubber-ring return rollers and a secondary cleaner are selected.'),
+  wet: b('محیط یا مواد خیس؛ اصطکاک درام محرک کمتر در نظر گرفته می‌شود.','Wet conditions; lower drive-pulley friction is assumed.'),
+  oil: b('مواد روغنی؛ تسمه با روکش مقاوم به روغن انتخاب می‌شود.','Oily material; an oil-resistant cover is selected.'),
+  fire: b('معدن زیرزمینی یا محیط با خطر آتش؛ تسمه ضد آتش انتخاب می‌شود.','Underground or fire-risk area; a fire-resistant belt is selected.'),
+  L: b('فاصله مرکز درام سر تا مرکز درام دم، در امتداد نوار (متر). مثال: 150','Distance between head and tail pulley centres along the belt (m). Example: 150'),
+  H: b('اختلاف ارتفاع دو سر نوار (متر). بالارو مثبت، سرازیر منفی، افقی صفر.','Height difference between the ends (m). Uphill positive, downhill negative, horizontal 0.'),
+  v: b('سرعت نوار (متر بر ثانیه). خالی بگذارید تا بر اساس سایندگی ماده پیشنهاد شود (معمولاً 1.5 تا 4).','Belt speed (m/s). Leave blank for a suggestion based on abrasiveness (usually 1.5–4).'),
+  bw: b('عرض نوار. «خودکار» کوچک‌ترین عرضی را انتخاب می‌کند که ظرفیت را با 10٪ حاشیه بدهد.','Belt width. “Auto” picks the smallest width giving the capacity with a 10% margin.'),
+  arr: b('شکل پایه‌های رفت. ناودانی سه‌رولیکی رایج‌ترین است.','Carrying idler shape. 3-roll troughed is the most common.'),
+  lam: b('زاویه رولیک‌های کناری. 35 درجه رایج است؛ زاویه بیشتر = ظرفیت بیشتر.','Wing roll angle. 35° is common; larger angle = more capacity.'),
+  rarr: b('شکل پایه‌های برگشت. خودکار: تخت، و برای عرض 1200 و بیشتر V.','Return idler shape. Auto: flat, V for widths of 1200 and above.'),
+  hLeg: b('ارتفاع متوسط پایه‌های سازه از زمین تا شاسی (متر)؛ برای وزن پایه‌ها.','Average height of the support legs (m); used for leg weight.'),
+  walk: b('راهروی سرویس کنار نوار (گریتینگ و نرده)؛ در وزن سازه حساب می‌شود.','Service walkway beside the conveyor (grating and handrail); included in structure weight.'),
+  cover: b('چند درصد طول نوار کاور (پوشش) دارد.','Percentage of the conveyor length that is covered.'),
+  fs: b('ساعت کار روزانه؛ روی ضریب بار رولیک‌ها و ضریب سرویس گیربکس اثر دارد.','Daily operating hours; affects roller load factor and gearbox service factor.'),
+  fm: b('شرایط محیط از نظر گرد و غبار، سایش و خوردگی.','Environment: dust, abrasion and corrosion.'),
+  f: b('ضریب اصطکاک فرضی DIN 22101. برای شرایط عادی 0.020 را نگه دارید.','DIN 22101 artificial friction factor. Keep 0.020 for normal conditions.'),
+  beltType: b('EP پارچه‌ای برای بیشتر نوارها؛ ST سیم‌فولادی برای نوارهای بلند و کشش زیاد.','EP fabric for most conveyors; ST steel cord for long, high-tension conveyors.'),
+  wrap: b('زاویه پیچیدن تسمه دور درام محرک. با درام اسناب (210 یا 240 درجه) کشش کمتری لازم است.','Belt wrap on the drive pulley. With a snub pulley (210° / 240°) less tension is needed.'),
+  lag: b('روکش درام محرک برای اصطکاک بیشتر؛ سرامیکی برای محیط خیس و کشش زیاد.','Drive pulley lagging for grip; ceramic for wet, high-tension duty.'),
+  lagAll: b('روکش لاستیکی روی درام‌های غیرمحرک برای کاهش سایش و چسبندگی.','Rubber lagging on non-drive pulleys to reduce wear and build-up.'),
+  start: b('روش راه‌اندازی موتور؛ روی نیروی لحظه راه‌اندازی و استحکام لازم تسمه اثر دارد.','Motor starting method; affects start-up force and required belt strength.'),
+  eta: b('راندمان گیربکس و کوپلینگ؛ معمولاً 0.90 تا 0.95.','Gearbox and coupling efficiency; usually 0.90–0.95.'),
+  takeup: b('سیستم کشش تسمه. خودکار: پیچی تا 60 متر، وزنه‌ای برای نوارهای بلندتر.','Take-up system. Auto: screw up to 60 m, gravity for longer conveyors.'),
+  secBlade: b('جنس تیغه بلت کلینر ثانویه آسارول. خودکار بر اساس سرعت و سایندگی.','Asaroll secondary cleaner blade. Auto by speed and abrasiveness.'),
+  heavy: b('برای کاربرد صنعتی سنگین، سری‌های سبک (M، RTL، MPS) حذف شوند.','For heavy industrial duty exclude light series (M, RTL, MPS).'),
+  poly: b('اجازه انتخاب رولیک با لوله پلیمری (برای محیط خورنده).','Allow polymer-tube rollers (corrosive environments).'),
+  /* محاسبه ظرفیت و بار */
+  c_mat: b('ماده را انتخاب کنید تا چگالی و زاویه سرریز پر شود.','Pick a material to fill density and surcharge angle.'),
+  c_Q: b('اگر ظرفیت لازم را وارد کنید، کمترین عرض نوار کافی مشخص می‌شود.','Enter the required capacity to get the minimum sufficient belt width.'),
+  c_delta: b('زاویه شیب نوار نسبت به افق (درجه). افقی صفر.','Belt inclination from horizontal (°). Horizontal 0.'),
+  l_a0: b('فاصله بین دو پایه رفت (متر). دکمه «پیشنهاد DIN» بر اساس عرض و چگالی پر می‌کند.','Distance between carrying idlers (m). “DIN suggestion” fills it from width and density.'),
+  l_au: b('فاصله بین دو پایه برگشت (متر). معمولاً 3.','Distance between return idlers (m). Usually 3.'),
+  l_qb: b('وزن هر متر تسمه (کیلوگرم). دکمه «تخمین» برای تسمه EP معمولی پر می‌کند.','Belt mass per metre (kg). “Estimate” fills a typical EP value.'),
+  l_life: b('عمر مورد انتظار بلبرینگ رولیک (ساعت). معمولاً 30000.','Required roller bearing life (h). Usually 30,000.')
+};
+const GUIDES = {
+  wiz: b(['ماده و ظرفیت (تن بر ساعت) را وارد کنید؛ چگالی خودکار پر می‌شود.','طول نوار و اختلاف ارتفاع را وارد کنید. بقیه را می‌توانید روی «خودکار» بگذارید.','در صورت نیاز «شرایط کار، تسمه و محرک» را باز و تنظیم کنید.','نتیجه بلافاصله در تب‌های پایین می‌آید: خلاصه، محاسبات، رولیک‌ها، تسمه، درام‌ها، موتور و گیربکس، بلت کلینر، وزن.','هر انتخاب خودکار (رولیک، تسمه، درام، موتور، نسبت گیربکس) را می‌توانید از منوی همان تب عوض کنید.','در «وزن و لیست قطعات» تعداد و وزن هر قطعه قابل ویرایش است.','پروژه را ذخیره کنید و «گزارش کامل PDF» یا «گزارش اکسل» بگیرید.'],
+    ['Enter material and capacity (t/h); density fills in automatically.','Enter conveyor length and lift. Everything else can stay on “auto”.','If needed open “Operation, belt & drive” and adjust.','Results appear immediately in the tabs below: summary, calculations, idlers, belt, pulleys, motor & gearbox, cleaners, weights.','Every automatic choice (roller, belt, pulley, motor, ratio) can be changed from that tab’s menu.','In “Weights & BOM” each quantity and mass is editable.','Save the project and export the full PDF or Excel report.']),
+  cap: b(['روش را انتخاب کنید: DIN/ISO (متریک) یا CEMA (اینچی).','ماده را انتخاب کنید یا چگالی و زاویه سرریز را وارد کنید.','عرض، چیدمان، زاویه و سرعت را تنظیم کنید؛ ظرفیت فوراً محاسبه می‌شود.','برای پیدا کردن عرض لازم، «ظرفیت لازم» را وارد کنید؛ ردیف‌های سبز کافی هستند.'],
+    ['Choose the method: DIN/ISO (metric) or CEMA (imperial).','Pick a material or enter density and surcharge angle.','Set width, arrangement, angle and speed; capacity updates instantly.','Enter the “required capacity” to find the width; green rows are sufficient.']),
+  load: b(['ظرفیت، سرعت، عرض و چیدمان نوار را وارد کنید.','فاصله پایه‌ها را وارد کنید یا «پیشنهاد DIN» را بزنید.','قطر رولیک و ضرایب (کلوخه، ساعت کار، محیط) را انتخاب کنید.','جدول پایین عمر بلبرینگ هر سری را نشان می‌دهد؛ ردیف سبز مناسب است و سبک‌ترین سری مناسب پیشنهاد می‌شود.'],
+    ['Enter capacity, speed, width and arrangement.','Enter idler pitches or press “DIN suggestion”.','Choose roller diameter and factors (lump size, hours, environment).','The table shows bearing life per series; green rows pass and the lightest suitable series is suggested.']),
+  ds: b(['در کادر جستجو هر چیزی تایپ کنید (مثلاً «ASA-2 133» یا «6205»).','با دکمه‌های گروه (بالای جدول) و فیلترها نتیجه را محدود کنید.','روی هر ردیف کلیک کنید تا تصویر و مشخصات کامل باز شود.','از دکمه‌های Excel و PDF برای خروجی همین نتیجه فیلترشده استفاده کنید.','برای افزودن یا ویرایش، قفل 🔒 بالای صفحه را با رمز مدیر باز کنید.'],
+    ['Type anything in the search box (e.g. “ASA-2 133” or “6205”).','Narrow results with the group buttons and filters.','Click a row to open its drawing and full specification.','Use Excel and PDF to export the filtered result.','To add or edit, unlock 🔒 at the top with the admin password.']),
+  cards: b(['روی هر کارت کلیک کنید تا تصویر و توضیح کامل آن باز شود.','در پنجره باز شده می‌توانید چاپ یا PDF بگیرید.'],
+    ['Click a card to open its drawing and full description.','You can print or save as PDF from that window.'])
+};
+const WELCOME = b(['📚 <b>رولیک‌ها، لوله‌ها، شافت‌ها، بلبرینگ، لاستیک و پایه‌ها:</b> جدول‌ها و کارت‌های مرجع با تصویر.','🧮 <b>طراحی و محاسبات:</b> طراحی کامل نوار نقاله از ظرفیت تا لیست قطعات و وزن.','🧪 <b>آزمایش‌ها:</b> روش انجام و فرم ثبت نتایج قابل چاپ.','ⓘ کنار هر فیلد = توضیح کوتاه؛ 📘 در هر بخش = راهنمای قدم‌به‌قدم؛ ❓ بالای صفحه = لینک، نصب و پشتیبان‌گیری.','EN / فا = تغییر زبان کل برنامه.'],
+  ['📚 <b>Rollers, tubes, shafts, bearings, rubber and frames:</b> reference tables and illustrated cards.','🧮 <b>Design & calculations:</b> complete conveyor design from capacity to BOM and weights.','🧪 <b>Tests:</b> methods and printable record forms.','ⓘ next to a field = short explanation; 📘 in each section = step-by-step guide; ❓ at the top = link, install and backup.','EN / فا switches the whole app language.']);
+
+const tip = h => h ? `<span class="tip" tabindex="0" role="note" data-tip="${esc(L(h))}" onclick="event.preventDefault();event.stopPropagation();this.focus()">ⓘ</span>` : '';
+const guideBtn = k => `<button class="gbtn" type="button" onclick="showGuide('${k}')">📘 ${esc(L(b('راهنما','Guide')))}</button>`;
+window.showGuide = k => {
+  const g = L(GUIDES[k]) || [];
+  openModal('📘 ' + L(b('راهنمای این بخش','Guide to this section')), `<ol class="steps">${g.map(s => `<li>${esc(s)}</li>`).join('')}</ol>`);
+};
+function showWelcome(){
+  if (LS.get('rs_welcomed', false)) return;
+  openModal('👋 ' + L(b('به «رولیک و استانداردها» خوش آمدید','Welcome to “Rollers & Standards”')), `<ul class="steps">${L(WELCOME).map(s => `<li>${s}</li>`).join('')}</ul>`,
+    `<button class="btn pri" onclick="LS.set('rs_welcomed', true); closeModal()">✓ ${esc(L(b('متوجه شدم','Got it')))}</button>`);
+}
+
+/* حباب توضیح: یک کادر ثابت که همیشه داخل صفحه می‌ماند (موس، لمس، کیبورد) */
+(() => {
+  let box = null, cur = null;
+  const show = t => { if (!box){ box = document.createElement('div'); box.id = 'tipbox'; document.body.appendChild(box); }
+    cur = t; box.textContent = t.dataset.tip; box.dir = document.documentElement.dir || 'rtl'; box.style.display = 'block';
+    const r = t.getBoundingClientRect(), w = box.offsetWidth, h = box.offsetHeight;
+    let x = (box.dir === 'rtl' ? r.right - w : r.left), y = r.bottom + 6;
+    x = Math.max(12, Math.min(x, innerWidth - w - 12)); if (y + h > innerHeight - 8) y = Math.max(8, r.top - h - 6);
+    box.style.left = x + 'px'; box.style.top = y + 'px'; };
+  const hide = () => { if (box) box.style.display = 'none'; cur = null; };
+  document.addEventListener('mouseover', e => { const t = e.target.closest && e.target.closest('.tip'); if (t) show(t); else if (cur && document.activeElement !== cur) hide(); });
+  document.addEventListener('focusin', e => { const t = e.target.closest && e.target.closest('.tip'); if (t) show(t); else hide(); });
+  document.addEventListener('focusout', e => { if (e.target === cur) hide(); });
+  addEventListener('scroll', () => { if (cur) show(cur); }, true);
+})();
 
 /* ═══════════════════════════════════════════════════════════════
    موتور طراحی کامل نوار نقاله — آسارول (ASA)
@@ -2378,14 +2480,22 @@ const CV = (() => {
     if (type === 'sel') h = `<select id="w_${k}" onchange="wizIn('${k}',this.value)">${opts.map(([o, t]) => `<option value="${esc(o)}" ${String(o) === String(v) ? 'selected' : ''}>${esc(L(t))}</option>`).join('')}</select>`;
     else if (type === 'chk') h = `<input type="checkbox" id="w_${k}" ${v ? 'checked' : ''} onchange="wizIn('${k}',this.checked)" style="width:auto;align-self:flex-start">`;
     else h = `<input id="w_${k}" type="number" step="any" value="${esc(v)}" placeholder="${esc(hint ? L(hint) : '')}" onchange="wizIn('${k}',this.value)">`;
-    return `<label>${esc(L(lab))}${unit ? ` <small>(${unit})</small>` : ''}${h}</label>`;
+    return `<label><span class="lh">${esc(L(lab))}${unit ? ` <small>(${unit})</small>` : ''}${tip(HINTS[k])}</span>${h}</label>`;
   };
+  /* چگالی و زاویه سرریز: از ماده پر می‌شوند و مقدار دستی هر ماده به خاطر سپرده می‌شود */
+  const matMem = () => CS.matMem || (CS.matMem = {});
+  const fillMat = w => { const m = findRow('materials', w.inp.mat); if (!m) return; const mm = matMem()[m.id] || {};
+    if (w.inp.rho === '' || w.inp.rho == null) w.inp.rho = mm.rho ?? m.rho;
+    if (w.inp.beta === '' || w.inp.beta == null) w.inp.beta = mm.beta ?? m.sur; };
+  const rhoLab = () => { const m = findRow('materials', W().inp.mat);
+    return m ? b(`چگالی (\u2066${m.rmin}–${m.rmax}\u2069)`, `Density (${m.rmin}–${m.rmax})`) : b('چگالی','Density'); };
   const auto = b('خودکار', 'auto');
   function form(){
+    fillMat(W());
     const mats = rowsOf('materials').map(m => [m.id, m.name]);
     return `<details open class="fs"><summary>⛰ ${T('ماده و ظرفیت','Material & capacity')}</summary><div class="form">
       ${I('mat', b('ماده','Material'), 'sel', mats)}${I('Q', b('ظرفیت','Capacity'), 'n', null, 't/h')}
-      ${I('rho', b('چگالی (خالی = از ماده)','Density (blank = material)'), 'n', null, 't/m³', auto)}${I('beta', b('زاویه سرریز β','Surcharge β'), 'n', null, '°', auto)}
+      ${I('rho', rhoLab(), 'n', null, 't/m³', auto)}${I('beta', b('زاویه سرریز β','Surcharge β'), 'n', null, '°', auto)}
       ${I('lump', b('اندازه کلوخه','Lump size'), 'sel', FD.map((x, i) => [i, x[0]]))}${I('drop', b('ارتفاع سقوط در بارگیری','Drop height at loading'), 'n', null, 'm')}
       ${I('temp', b('دمای ماده','Material temperature'), 'n', null, '°C')}${I('sticky', b('ماده چسبنده','Sticky material'), 'chk')}
       ${I('wet', b('محیط مرطوب','Wet conditions'), 'chk')}${I('oil', b('ماده روغنی','Oily material'), 'chk')}${I('fire', b('نیاز به ضد آتش','Fire resistant required'), 'chk')}
@@ -2411,7 +2521,12 @@ const CV = (() => {
       ${I('poly', b('اجازه رولیک پلیمری','Allow polymer rollers'), 'sel', [['no', b('خیر','no')], ['yes', b('بله','yes')]])}
     </div></details>`;
   }
-  window.wizIn = (k, v) => { const w = W(); w.inp[k] = typeof v === 'boolean' ? v : (v === '' ? '' : (isNaN(+v) ? v : +v)); if (['bw', 'arr', 'lam', 'v', 'beltType', 'Q', 'L'].includes(k)) w.ovr = {}; saveCS(); run(); };
+  window.wizIn = (k, v) => { const w = W(); w.inp[k] = typeof v === 'boolean' ? v : (v === '' ? '' : (isNaN(+v) ? v : +v));
+    if (k === 'mat'){ w.inp.rho = ''; w.inp.beta = ''; fillMat(w); ['rho', 'beta'].forEach(x => { const e = $('w_' + x); if (e) e.value = w.inp[x]; });
+      const lb = $('w_rho') && $('w_rho').parentNode.querySelector('.lh'); if (lb) lb.firstChild.textContent = L(rhoLab()) + ' '; }
+    if (k === 'rho' || k === 'beta'){ const m = findRow('materials', w.inp.mat);
+      if (m){ const mm = matMem()[m.id] || (matMem()[m.id] = {}); if (w.inp[k] === '') { delete mm[k]; fillMat(w); const e = $('w_' + k); if (e) e.value = w.inp[k]; } else mm[k] = w.inp[k]; } }
+    if (['bw', 'arr', 'lam', 'v', 'beltType', 'Q', 'L'].includes(k)) w.ovr = {}; saveCS(); run(); };
   window.wizOvr = (k, v) => { const w = W(); if (v === '' || v == null) delete w.ovr[k]; else w.ovr[k] = v; saveCS(); run(); };
   window.wizTab = k => { W().tab = k; saveCS(); out(); };
 
@@ -2559,7 +2674,7 @@ const CV = (() => {
   /* ── رندر بخش ── */
   CALC.wiz = el => {
     const w = W(), pj = Object.keys(PJ());
-    el.innerHTML = `<div class="card"><div class="ch"><span>🏭 ${T('طراحی کامل نوار نقاله (۰ تا ۱۰۰)','Complete belt conveyor design (0 to 100)')}</span><small>DIN 22101 · ISO 5048 · CEMA</small></div>
+    el.innerHTML = `<div class="card"><div class="ch"><span>🏭 ${T('طراحی کامل نوار نقاله (۰ تا ۱۰۰)','Complete belt conveyor design (0 to 100)')}</span><small>DIN 22101 · ISO 5048 · CEMA ${guideBtn('wiz')}</small></div>
       <div class="bar"><select onchange="wizLoad(this.value)"><option value="">📂 ${T('پروژه‌های ذخیره‌شده','Saved projects')} (${pj.length})</option>${pj.map(n => `<option ${n === w.name ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>
         <span class="cnt" style="margin:0">${esc(w.name || '')}</span>
         <button class="btn" onclick="wizSave()">💾 ${T('ذخیره پروژه','Save project')}</button><button class="btn" onclick="wizNew()">🆕 ${T('جدید','New')}</button><button class="btn" onclick="wizDel()">🗑</button>

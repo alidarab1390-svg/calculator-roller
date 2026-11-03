@@ -21,7 +21,7 @@ for f in sorted(os.listdir(pdir)) if os.path.isdir(pdir) else []:
     k, ext = os.path.splitext(f)
     if ext.lower() in mime:
         photos[k] = 'data:%s;base64,%s' % (mime[ext.lower()], base64.b64encode(open(os.path.join(pdir, f), 'rb').read()).decode())
-js = '\n'.join(rd(os.path.join(src, f)) for f in ['sha256.js', 'data_rollers.js', 'data_other.js', 'data_conveyor.js', 'i18n.js', 'svg.js', 'app.js', 'conveyor.js', 'conveyor_ui.js'])
+js = '\n'.join(rd(os.path.join(src, f)) for f in ['sha256.js', 'data_rollers.js', 'data_other.js', 'data_conveyor.js', 'i18n.js', 'svg.js', 'app.js','help.js', 'conveyor.js', 'conveyor_ui.js'])
 js = js.replace('%%PW_HASH%%', hashlib.sha256(pw.encode()).hexdigest()).replace('%%VERSION%%', VERSION)
 
 def page(head):
