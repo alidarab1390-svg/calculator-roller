@@ -141,12 +141,29 @@ details.fs{border:1.5px solid var(--bd);border-radius:10px;margin-bottom:10px;ba
     <div class="brand"><b data-i="app"></b><small data-i="subtitle"></small></div>
     <div class="gs"><input id="gq" type="search" data-ph="gsearch_ph" oninput="gSearch(this.value)" onfocus="gSearch(this.value)"><div id="gres" class="hidden"></div></div>
     <button class="hb hidden" id="install_btn" onclick="installApp()">📲</button>
+    <button class="hb" onclick="openHelp()" title="Help">❓</button>
     <button class="hb" id="lang_btn" onclick="toggleLang()" title="فارسی / English">EN</button>
     <button class="hb" id="lock_btn" onclick="lockClick()"></button>
   </div>
   <nav id="tabs"></nav>
 </header>
 <main id="main"></main>
+<div id="fatal" class="hidden" style="max-width:640px;margin:30px auto;padding:20px;background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.1);line-height:2;font-family:Tahoma,sans-serif"></div>
+<script>
+/* بررسی سازگاری مرورگر — ES5 تا در مرورگرهای قدیمی هم اجرا شود */
+(function(){
+  var ok = true;
+  try { new Function('var a=null; var o={b:1}; return (a ?? 1) + (o?.b || 0)')(); if (!window.Promise || !window.TextEncoder || !document.querySelector) ok = false; } catch(e){ ok = false; }
+  if (!ok){
+    var f = document.getElementById('fatal'); f.className = '';
+    f.innerHTML = '<b>⚠️ این مرورگر قدیمی است یا از برنامه پشتیبانی نمی‌کند.</b><br>لطفاً فایل را با <b>Google Chrome</b>، <b>Microsoft Edge</b>، <b>Firefox</b> یا <b>Safari</b> (به‌روز) باز کنید، یا از لینک زیر استفاده کنید:<br>' +
+      '<a href="https://alidarab1390-svg.github.io/calculator-roller/roller-standards/app/" dir="ltr">alidarab1390-svg.github.io/calculator-roller/roller-standards/app</a><hr>' +
+      '<b>This browser is too old or unsupported.</b> Please open the file with an up-to-date Chrome, Edge, Firefox or Safari, or use the link above.<br>' +
+      'اگر فایل را داخل تلگرام/واتس‌اپ/ایمیل باز کرده‌اید، ابتدا آن را ذخیره کنید و سپس با مرورگر باز کنید.';
+    window.__RS_OLD = true;
+  }
+})();
+</script>
 <footer data-i="footer"></footer>
 <div id="modal" class="hidden" onclick="if(event.target===this)closeModal()">
   <div class="mb"><div class="mh"><span id="modal_t"></span><button onclick="closeModal()">✕</button></div><div id="modal_b"></div><div class="mf" id="modal_f"></div></div>
@@ -1797,7 +1814,12 @@ CALC.factors = el => {
 
 /* ─────────────── چاپ / PDF / اکسل ─────────────── */
 function printHtml(title, body){
-  const w = window.open('', '_blank'); if (!w){ toast(L(I18N.popup)); return; }
+  let w = null; try { w = window.open('', '_blank'); } catch(e){}
+  if (!w){ /* پاپ‌آپ مسدود است → چاپ داخل همین صفحه با iframe */
+    const fr = document.createElement('iframe'); fr.style.cssText = 'position:fixed;width:0;height:0;border:0;right:0;bottom:0';
+    document.body.appendChild(fr); w = fr.contentWindow; setTimeout(() => fr.remove(), 60000);
+    toast(L(b('پنجره چاپ داخل همین صفحه باز شد','Printing from this page')));
+  }
   w.document.write(`<!DOCTYPE html><html lang="${APP.lang}" dir="${APP.lang==='fa'?'rtl':'ltr'}"><head><meta charset="UTF-8"><title>${esc(title)}</title><style>${FONT_CSS}
   @page{size:A4 landscape;margin:10mm}body{font-family:Vazirmatn,Tahoma,sans-serif;font-size:10.5px;color:#241729}
   .hd{display:flex;align-items:center;gap:10px;border-bottom:2px solid #3b1f47;padding-bottom:6px;margin-bottom:8px}.hd img{width:42px;height:42px;border-radius:50%}
@@ -1926,7 +1948,46 @@ let tT = null;
 function toast(m){ const el = $('toast'); el.textContent = m; el.classList.remove('hidden'); clearTimeout(tT); tT = setTimeout(() => el.classList.add('hidden'), 2800); }
 window.toggleLang = () => { APP.lang = APP.lang === 'fa' ? 'en' : 'fa'; LS.set('rs_lang', APP.lang); renderAll(); const q = $('gq'); if (q.value) gSearch(q.value); };
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-document.addEventListener('DOMContentLoaded', async () => { $('logo').src = LOGO;
+/* خطای پیش‌بینی‌نشده → پیام دوستانه به‌جای صفحه سفید */
+window.addEventListener('error', e => {
+  if (window.__RS_OLD) return;
+  const m = $('main');
+  if (m && !m.children.length){ const f = $('fatal'); f.classList.remove('hidden');
+    f.innerHTML = `<b>⚠️ ${esc(L(b('خطا در نمایش برنامه','The app could not be displayed')))}</b><br><small dir="ltr">${esc(e.message || '')}</small><br>
+      <button class="btn pri" onclick="LS.del('rs_tab');LS.del('rs_sec');LS.del('rs_calc');location.reload()">↺ ${esc(L(b('بازنشانی تنظیمات نمایش و بارگذاری دوباره','Reset view settings and reload')))}</button>`; }
+  else toast('⚠️ ' + L(b('خطایی رخ داد؛ اگر تکرار شد صفحه را دوباره باز کنید.','An error occurred; reload the page if it repeats.')));
+});
+const APP_URL = 'https://alidarab1390-svg.github.io/calculator-roller/roller-standards/app/';
+const storeKind = () => IDB ? 'IndexedDB' : (() => { try { localStorage.setItem('rs__t','1'); localStorage.removeItem('rs__t'); return 'localStorage'; } catch(e){ return 'memory'; } })();
+window.openHelp = () => {
+  const kind = storeKind(), kindTxt = {IndexedDB:b('دائمی (IndexedDB) ✅','permanent (IndexedDB) ✅'), localStorage:b('دائمی (حافظه کوچک مرورگر) ⚠️','permanent (small browser storage) ⚠️'), memory:b('موقت — با بستن صفحه پاک می‌شود ⛔','temporary — lost when the page closes ⛔')}[kind];
+  openModal('❓ ' + L(b('راهنما و اشتراک با همکاران','Help & sharing with colleagues')), `<div class="body">
+    <h4>🔗 ${L(b('لینک برنامه (همیشه آخرین نسخه)','App link (always the latest version)'))}</h4>
+    <div class="row"><input id="app_url" value="${APP_URL}" readonly dir="ltr" style="flex:1;padding:7px;border:1.5px solid var(--bd);border-radius:7px"><button class="btn pri" onclick="copyUrl()">📋 ${L(b('کپی','Copy'))}</button></div>
+    <ol class="steps">${L(b(['<b>گوشی و تبلت (اندروید / آیفون):</b> لینک را در Chrome یا Safari باز کنید و «نصب برنامه» یا «Add to Home Screen» را بزنید.','<b>لپ‌تاپ و کامپیوتر (ویندوز / مک):</b> لینک را در Chrome یا Edge باز کنید و دکمه نصب ⊕ نوار آدرس را بزنید.','<b>بدون اینترنت:</b> فایل HTML را ذخیره کنید و با دوبار کلیک باز کنید (Chrome، Edge، Firefox یا Safari).','فایل را داخل پیش‌نمایش تلگرام، واتس‌اپ یا ایمیل باز نکنید؛ ابتدا ذخیره کنید، سپس با مرورگر باز کنید.','اطلاعات هر نفر روی دستگاه خودش ذخیره می‌شود؛ برای انتقال به دستگاه دیگر از «پشتیبان کامل» استفاده کنید.'],
+      ['<b>Phone & tablet (Android / iPhone):</b> open the link in Chrome or Safari and tap “Install app” or “Add to Home Screen”.','<b>Laptop & desktop (Windows / Mac):</b> open the link in Chrome or Edge and click the install ⊕ icon in the address bar.','<b>Offline:</b> save the HTML file and double-click it (Chrome, Edge, Firefox or Safari).','Do not open the file inside a Telegram, WhatsApp or e-mail preview; save it first, then open it in a browser.','Each person’s data is stored on their own device; use “Full backup” to move it to another device.'])).map(x => `<li>${x}</li>`).join('')}</ol>
+    <h4>💾 ${L(b('ذخیره‌سازی روی این دستگاه','Storage on this device'))}: ${L(kindTxt)}</h4>
+    <div class="row"><button class="btn" onclick="backupAll()">⬇ ${L(b('پشتیبان کامل اطلاعات من','Full backup of my data'))}</button>
+    <label class="btn">⬆ ${L(b('بازیابی از پشتیبان','Restore from backup'))}<input type="file" accept=".json" hidden onchange="restoreAll(event)"></label></div>
+    <p class="note">${L(b('پشتیبان شامل پروژه‌های طراحی، تنظیمات و تغییرات جدول‌هاست (رمز مدیر در آن نیست). بازیابی تغییرات جدول‌ها فقط با باز بودن قفل انجام می‌شود.','The backup contains design projects, settings and table changes (not the admin password). Table changes are restored only when unlocked.'))}</p>
+    <p class="note">V${APP_VERSION} · ${esc(navigator.userAgent.replace(/^Mozilla\/5.0 /,''))}</p></div>`);
+};
+window.copyUrl = () => { const i = $('app_url'); i.select(); try { navigator.clipboard.writeText(APP_URL).then(() => toast('✅ ' + L(b('لینک کپی شد','Link copied'))), () => { document.execCommand('copy'); toast('✅'); }); } catch(e){ document.execCommand('copy'); toast('✅'); } };
+window.backupAll = () => {
+  const data = {}; Object.keys(MEM).filter(k => /^rs_/.test(k) && k !== 'rs_pw').forEach(k => data[k] = MEM[k]);
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify({app:'asaroll-rs-backup', v:APP_VERSION, date:new Date().toISOString(), data}, null, 1)], {type:'application/json'}));
+  a.download = `Asaroll_backup_${new Date().toISOString().slice(0,10)}.json`; document.body.appendChild(a); a.click(); a.remove();
+};
+window.restoreAll = ev => {
+  const f = ev.target.files[0]; if (!f) return;
+  const rd = new FileReader(); rd.onload = () => { try { const p = JSON.parse(rd.result); if (p.app !== 'asaroll-rs-backup') throw 0; let skipped = 0;
+    Object.entries(p.data || {}).forEach(([k, v]) => { if (/^rs_ds_/.test(k) && !APP.unlocked){ skipped++; return; } if (k === 'rs_conv_proj') v = Object.assign({}, LS.get('rs_conv_proj', {}), v); LS.set(k, v); });
+    Object.keys(ROWS).forEach(k => delete ROWS[k]); Object.assign(CS, LS.get('rs_calc', CS));
+    closeModal(); renderAll(); toast('✅ ' + L(b('بازیابی انجام شد','Restored')) + (skipped ? ' — ' + L(b('تغییرات جدول‌ها نیاز به باز کردن قفل دارد','table changes need unlocking')) : '')); }
+    catch(e){ toast('⛔ ' + L(b('فایل پشتیبان نامعتبر است','Invalid backup file'))); } }; rd.readAsText(f);
+};
+document.addEventListener('DOMContentLoaded', async () => { if (window.__RS_OLD) return; $('logo').src = LOGO;
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch(e){}
   await storeInit();
   Object.assign(APP, {lang: LS.get('rs_lang','fa'), tab: LS.get('rs_tab','rollers'), sec: LS.get('rs_sec',{})});
   Object.assign(CS, LS.get('rs_calc', {capMode:'din'}));

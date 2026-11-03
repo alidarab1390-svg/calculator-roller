@@ -15,12 +15,29 @@
     <div class="brand"><b data-i="app"></b><small data-i="subtitle"></small></div>
     <div class="gs"><input id="gq" type="search" data-ph="gsearch_ph" oninput="gSearch(this.value)" onfocus="gSearch(this.value)"><div id="gres" class="hidden"></div></div>
     <button class="hb hidden" id="install_btn" onclick="installApp()">📲</button>
+    <button class="hb" onclick="openHelp()" title="Help">❓</button>
     <button class="hb" id="lang_btn" onclick="toggleLang()" title="فارسی / English">EN</button>
     <button class="hb" id="lock_btn" onclick="lockClick()"></button>
   </div>
   <nav id="tabs"></nav>
 </header>
 <main id="main"></main>
+<div id="fatal" class="hidden" style="max-width:640px;margin:30px auto;padding:20px;background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.1);line-height:2;font-family:Tahoma,sans-serif"></div>
+<script>
+/* بررسی سازگاری مرورگر — ES5 تا در مرورگرهای قدیمی هم اجرا شود */
+(function(){
+  var ok = true;
+  try { new Function('var a=null; var o={b:1}; return (a ?? 1) + (o?.b || 0)')(); if (!window.Promise || !window.TextEncoder || !document.querySelector) ok = false; } catch(e){ ok = false; }
+  if (!ok){
+    var f = document.getElementById('fatal'); f.className = '';
+    f.innerHTML = '<b>⚠️ این مرورگر قدیمی است یا از برنامه پشتیبانی نمی‌کند.</b><br>لطفاً فایل را با <b>Google Chrome</b>، <b>Microsoft Edge</b>، <b>Firefox</b> یا <b>Safari</b> (به‌روز) باز کنید، یا از لینک زیر استفاده کنید:<br>' +
+      '<a href="https://alidarab1390-svg.github.io/calculator-roller/roller-standards/app/" dir="ltr">alidarab1390-svg.github.io/calculator-roller/roller-standards/app</a><hr>' +
+      '<b>This browser is too old or unsupported.</b> Please open the file with an up-to-date Chrome, Edge, Firefox or Safari, or use the link above.<br>' +
+      'اگر فایل را داخل تلگرام/واتس‌اپ/ایمیل باز کرده‌اید، ابتدا آن را ذخیره کنید و سپس با مرورگر باز کنید.';
+    window.__RS_OLD = true;
+  }
+})();
+</script>
 <footer data-i="footer"></footer>
 <div id="modal" class="hidden" onclick="if(event.target===this)closeModal()">
   <div class="mb"><div class="mh"><span id="modal_t"></span><button onclick="closeModal()">✕</button></div><div id="modal_b"></div><div class="mf" id="modal_f"></div></div>
